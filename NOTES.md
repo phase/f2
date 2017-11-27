@@ -43,7 +43,7 @@ add x y = x + y.
 addThree :: Int -> Int -> Int -> Int
 addThree x y z =
   let w = add x y,
-  add w z.
+  add w z
 ```
 
 ```
@@ -53,7 +53,7 @@ import test
 
 addFour w x y z =
   let d = addThree x y z,
-  add d w.
+  add d w
 ```
 
 ## Traits & Structs
@@ -72,7 +72,28 @@ struct IntBox : Accumulator {
   inc :: Int -> Int      // Can be inferred
   inc x =                // Compiles to: int inc(IntBox* this, int x)
     this.x = this.x + 1, // Modifies struct
-    this.x.
+    this.x
+}
+```
+
+### Generics
+
+If Generics are added, this is what the syntax would be.
+
+```
+struct Box[T] {
+  let v : T
+}
+
+trait Add[T] {
+  add :: T -> T
+}
+
+struct Int : Add[Int] {
+  let x : Int
+
+  add :: Int -> Int
+  addy = this.x + y
 }
 ```
 
