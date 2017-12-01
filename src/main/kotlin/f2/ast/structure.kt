@@ -1,40 +1,56 @@
 package f2.ast
 
-data class Module(
-        val functionDeclarations: List<FunctionDeclaration>,
-        val functionDefinitions: List<FunctionDefinition>,
-        val structs: List<Struct>,
-        val traits: List<Trait>
-)
+data class AstModule(
+        val name: String,
+        val functionDeclarations: List<AstFunctionDeclaration>,
+        val functionDefinitions: List<AstFunctionDefinition>,
+        val structs: List<AstStruct>,
+        val traits: List<AstTrait>
+) {
+    fun getType(name: String, localVariables: Map<String, Type>): Type {
+        if (localVariables.containsKey(name)) return localVariables[name]!!
 
-data class FunctionDeclaration(
+        val functions = functionDeclarations.filter { it.name == name }
+        if (functions.isNotEmpty()) return functions[0].returnType
+
+        return UndefinedType
+    }
+
+    fun getArgumentType(functionName: String, index: Int): Type {
+        val functions = functionDeclarations.filter { it.name == functionName }
+        if (functions.isNotEmpty()) return functions[0].argumentTypes[index]
+
+        return UndefinedType
+    }
+}
+
+data class AstFunctionDeclaration(
         val name: String,
         val argumentTypes: List<Type>,
         val returnType: Type
 )
 
-data class FunctionDefinition(
+data class AstFunctionDefinition(
         val name: String,
         val arguments: List<String>,
-        val statements: List<Statement>,
-        val returnExpression: Expression
+        val statements: List<Statement>
 )
 
-data class Field(
+data class AstField(
         val name: String,
         val type: Type
 )
 
-class Struct(
+class AstStruct(
         name: String,
-        val fields: List<Field>,
-        val traits: List<Trait>,
-        val functionDeclarations: List<FunctionDeclaration>,
-        val functionDefinitions: List<FunctionDefinition>
+        val fields: List<AstField>,
+        val traits: List<AstTrait>,
+        val functionDeclarations: List<AstFunctionDeclaration>,
+        val functionDefinitions: List<AstFunctionDefinition>
 ) : Type(name)
 
-class Trait(
+class AstTrait(
         name: String,
-        val functionDeclarations: List<FunctionDeclaration>
+        val functionDeclarations: List<AstFunctionDeclaration>
 ) : Type(name)
 

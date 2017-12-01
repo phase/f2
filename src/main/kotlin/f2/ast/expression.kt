@@ -17,3 +17,7 @@ data class VariableAssignmentStatement(
         val name: String,
         val expression: Expression
 ) : Statement
+
+data class ReturnStatement(
+        val expression: Expression
+) : Statement
