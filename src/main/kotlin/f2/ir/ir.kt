@@ -4,7 +4,8 @@ import f2.ast.Type
 
 data class IrModule(
         val name: String,
-        val functions: List<IrFunction>
+        val functions: List<IrFunction>,
+        val structs: List<IrStruct>
 )
 
 data class IrFunction(
@@ -15,11 +16,12 @@ data class IrFunction(
         val instructions: List<Instruction>
 )
 
-interface Instruction
+class IrStruct(
+        name: String,
+        val fields: List<Type>
+) : Type(name)
 
-data class AssignRegisterInstruction(
-        val regIndex: Int
-) : Instruction
+interface Instruction
 
 data class FunctionCallInstruction(
         val functionName: String,
@@ -28,4 +30,19 @@ data class FunctionCallInstruction(
 
 data class ReturnInstruction(
         val registerIndex: Int
+) : Instruction
+
+data class FieldGetInstruction(
+        val registerIndex: Int,
+        val fieldIndex: Int
+) : Instruction
+
+data class FieldSetInstruction(
+        val registerIndex: Int,
+        val fieldIndex: Int,
+        val valueIndex: Int
+) : Instruction
+
+data class AllocateInstruction(
+        val type: IrStruct
 ) : Instruction

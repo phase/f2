@@ -22,6 +22,13 @@ data class AstModule(
 
         return UndefinedType
     }
+
+    fun getStruct(structName: String): AstStruct {
+        val structs = structs.filter { it.name == structName }
+        if (structs.isNotEmpty()) return structs[0]
+        // TODO: Real errors
+        throw Exception("$structName not found in Module $name")
+    }
 }
 
 data class AstFunctionDeclaration(

@@ -3,6 +3,10 @@ package f2.ir
 import f2.ast.*
 
 fun convert(astModule: AstModule): IrModule {
+    val irStructs = astModule.structs.map {
+        convert(astModule, it)
+    }
+
     val irFunctions = astModule.functionDefinitions.map {
         val defName = it.name
         val dec = run {
@@ -13,7 +17,14 @@ fun convert(astModule: AstModule): IrModule {
         }
         convert(astModule, dec, it)
     }
-    return IrModule(astModule.name, irFunctions)
+    return IrModule(astModule.name, irFunctions, irStructs)
+}
+
+fun convert(
+        astModule: AstModule,
+        astStruct: AstStruct
+): IrStruct {
+    return IrStruct(astStruct.name, astStruct.fields.map { it.type })
 }
 
 fun convert(
@@ -23,6 +34,7 @@ fun convert(
 ): IrFunction {
     val functionName = astFunctionDeclaration.name
     val returnType = astFunctionDeclaration.returnType
+    val argCount = astFunctionDeclaration.argumentTypes.size
     val variables: MutableMap<String, Type> = astFunctionDefinition.arguments.mapIndexed { i, s -> s to astFunctionDeclaration.argumentTypes[i] }.toMap().toMutableMap()
     val registerIndexes: MutableMap<String, Int> = astFunctionDefinition.arguments.mapIndexed { i, s -> s to i }.toMap().toMutableMap()
     val registers: MutableList<Type> = astFunctionDeclaration.argumentTypes.toMutableList()
@@ -36,6 +48,10 @@ fun convert(
             is FunctionCallExpression -> {
                 exp.arguments.forEachIndexed { i, e ->
                     val argType = typeCheck(e)
+                    if (e !is IdentifierExpression) {
+                        println("${registers.size} := $e : $argType")
+                        registers.add(argType)
+                    }
                     if (e is IdentifierExpression && argType == UndefinedType) {
                         val argInFunType = astModule.getArgumentType(exp.functionName, i)
                         val varName = e.name
@@ -46,7 +62,14 @@ fun convert(
                 }
                 astModule.getType(exp.functionName, mapOf())
             }
-            else -> UndefinedType
+            is FieldGetterExpression -> {
+                val struct = astModule.getStruct(exp.structName)
+                struct.fields.filter { it.name == exp.fieldName }.last().type
+            }
+            else -> {
+                println(exp)
+                UndefinedType
+            }
         }
     }
 
@@ -61,6 +84,13 @@ fun convert(
                 registerIndexes.put(it.name, registers.size)
                 registers.add(type)
             }
+            is FieldSetterStatement -> {
+                val structType = variables[it.structName]!! as AstStruct
+                val fieldName = it.fieldName
+                val fieldType = structType.fields.filter { it.name == fieldName }.last().type
+                val expType = typeCheck(it.expression)
+                assert(expType == fieldType)
+            }
             is ReturnStatement -> {
                 typeCheck(it.expression)
             }
@@ -70,31 +100,48 @@ fun convert(
     }
 
     // returns the register index the expression goes into
-    fun generateExpression(exp: Expression, reg: Int): Int {
+    fun generateExpression(exp: Expression): Int {
+        println(exp)
         return when (exp) {
             is FunctionCallExpression -> {
                 instructions.add(FunctionCallInstruction(
                         exp.functionName,
-                        exp.arguments.map { generateExpression(it, reg) }
+                        exp.arguments.map { generateExpression(it) }
                 ))
-                reg
+                instructions.size + argCount
             }
             is IdentifierExpression -> registerIndexes[exp.name]!!
+            is FieldGetterExpression -> {
+                val structReg = registerIndexes[exp.structName]!!
+                val struct = variables[exp.structName]!! as AstStruct
+                val fieldIndex = struct.fields.map { it.name }.indexOf(exp.fieldName)
+                instructions.add(FieldGetInstruction(
+                        structReg,
+                        fieldIndex
+                ))
+                instructions.size + argCount
+            }
             else -> -1
         }
     }
 
     // go through them again and generate the instructions
     statements.map {
+        println(it)
         when (it) {
             is VariableAssignmentStatement -> {
-                val i = registerIndexes[it.name]!!
-                generateExpression(it.expression, i)
-                instructions.add(AssignRegisterInstruction(i))
+                generateExpression(it.expression)
             }
             is ReturnStatement -> {
-                val i = generateExpression(it.expression, -1)
+                val i = generateExpression(it.expression)
                 instructions.add(ReturnInstruction(i))
+            }
+            is FieldSetterStatement -> {
+                val structReg = registerIndexes[it.structName]!!
+                val struct = variables[it.structName]!! as AstStruct
+                val fieldIndex = struct.fields.map { it.name }.indexOf(it.fieldName)
+                val i = generateExpression(it.expression)
+                instructions.add(FieldSetInstruction(structReg, fieldIndex, i))
             }
             else -> {
             }

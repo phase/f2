@@ -11,6 +11,11 @@ data class FunctionCallExpression(
         val arguments: List<Expression>
 ) : Expression
 
+data class FieldGetterExpression(
+        val structName: String,
+        val fieldName: String
+) : Expression
+
 interface Statement
 
 data class VariableAssignmentStatement(
@@ -19,5 +24,11 @@ data class VariableAssignmentStatement(
 ) : Statement
 
 data class ReturnStatement(
+        val expression: Expression
+) : Statement
+
+data class FieldSetterStatement(
+        val structName: String,
+        val fieldName: String,
         val expression: Expression
 ) : Statement

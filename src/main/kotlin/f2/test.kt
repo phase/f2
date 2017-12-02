@@ -10,7 +10,8 @@ fun main(args: Array<String>) {
     add :: Int -> Int -> Int
     add x y =
         let z = internal_add_i32(x, y),
-        z.
+        let w = internal_add_i32(internal_add_i32(x, y), z),
+        w.
      */
     val program: AstModule = AstModule(
             "addition",
@@ -29,7 +30,20 @@ fun main(args: Array<String>) {
                                                     )
                                             )
                                     ),
-                                    ReturnStatement(IdentifierExpression("z"))
+                                    VariableAssignmentStatement("w",
+                                            FunctionCallExpression("internal_add_i32",
+                                                    listOf(
+                                                            FunctionCallExpression("internal_add2_i32",
+                                                                    listOf(
+                                                                            IdentifierExpression("x"),
+                                                                            IdentifierExpression("z")
+                                                                    )
+                                                            ),
+                                                            IdentifierExpression("z")
+                                                    )
+                                            )
+                                    ),
+                                    ReturnStatement(IdentifierExpression("w"))
                             )
                     )
             ),
