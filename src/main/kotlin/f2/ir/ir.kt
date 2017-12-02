@@ -38,9 +38,9 @@ data class FieldGetInstruction(
 ) : Instruction
 
 data class FieldSetInstruction(
-        val registerIndex: Int,
+        val structRegisterIndex: Int,
         val fieldIndex: Int,
-        val valueIndex: Int
+        val valueRegisterIndex: Int
 ) : Instruction
 
 data class AllocateInstruction(

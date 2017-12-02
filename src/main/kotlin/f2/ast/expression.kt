@@ -16,6 +16,11 @@ data class FieldGetterExpression(
         val fieldName: String
 ) : Expression
 
+data class AllocateStructExpression(
+        val struct: String,
+        val expressions: List<Expression>
+) : Expression
+
 interface Statement
 
 data class VariableAssignmentStatement(

@@ -8,7 +8,7 @@ fun main(args: Array<String>) {
     val X = AstStruct("X", listOf(AstField("a", int)), listOf(), listOf(), listOf())
     /*
     struct X {
-      let x : Int
+      let a : Int
     }
     internal_add_i32 :: Int -> Int -> Int
     add :: Int -> Int -> Int
@@ -20,13 +20,17 @@ fun main(args: Array<String>) {
     f :: X -> Int
     f x = x.a.
     f x = let z = x.a, return z.
+
+    g :: Int -> X
+    g a = new X(a).
      */
     val program: AstModule = AstModule(
             "addition",
             listOf(
                     AstFunctionDeclaration("internal_add_i32", listOf(int, int), int),
                     AstFunctionDeclaration("add", listOf(int, int), int),
-                    AstFunctionDeclaration("f", listOf(X), int)
+                    AstFunctionDeclaration("f", listOf(X), int),
+                    AstFunctionDeclaration("g", listOf(int), X)
             ),
             listOf(
                     AstFunctionDefinition("add", listOf("x", "y"),
@@ -59,6 +63,18 @@ fun main(args: Array<String>) {
                             listOf(
                                     VariableAssignmentStatement("z",
                                             FieldGetterExpression("x", "a")
+                                    ),
+                                    ReturnStatement(IdentifierExpression("z"))
+                            )
+                    ),
+                    AstFunctionDefinition("g", listOf("a"),
+                            listOf(
+                                    VariableAssignmentStatement("z",
+                                            AllocateStructExpression("X",
+                                                    listOf(
+                                                            IdentifierExpression("a")
+                                                    )
+                                            )
                                     ),
                                     ReturnStatement(IdentifierExpression("z"))
                             )

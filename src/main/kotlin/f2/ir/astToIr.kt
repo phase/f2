@@ -15,7 +15,7 @@ fun convert(astModule: AstModule): IrModule {
                 AstFunctionDeclaration(defName, (0..it.arguments.size - 1).map { UndefinedType }, UndefinedType)
             }
         }
-        convert(astModule, dec, it)
+        convert(astModule, dec, it, irStructs)
     }
     return IrModule(astModule.name, irFunctions, irStructs)
 }
@@ -30,7 +30,8 @@ fun convert(
 fun convert(
         astModule: AstModule,
         astFunctionDeclaration: AstFunctionDeclaration,
-        astFunctionDefinition: AstFunctionDefinition
+        astFunctionDefinition: AstFunctionDefinition,
+        irStructs: List<IrStruct>
 ): IrFunction {
     val functionName = astFunctionDeclaration.name
     val returnType = astFunctionDeclaration.returnType
@@ -40,6 +41,7 @@ fun convert(
     val registers: MutableList<Type> = astFunctionDeclaration.argumentTypes.toMutableList()
     val instructions: MutableList<Instruction> = mutableListOf()
 
+    // return type of expression
     fun typeCheck(exp: Expression): Type {
         return when (exp) {
             is IdentifierExpression -> {
@@ -49,7 +51,6 @@ fun convert(
                 exp.arguments.forEachIndexed { i, e ->
                     val argType = typeCheck(e)
                     if (e !is IdentifierExpression) {
-                        println("${registers.size} := $e : $argType")
                         registers.add(argType)
                     }
                     if (e is IdentifierExpression && argType == UndefinedType) {
@@ -65,6 +66,10 @@ fun convert(
             is FieldGetterExpression -> {
                 val struct = variables[exp.structName]!! as AstStruct
                 struct.fields.filter { it.name == exp.fieldName }.last().type
+            }
+            is AllocateStructExpression -> {
+                exp.expressions.forEach { typeCheck(it) }
+                astModule.getStruct(exp.struct)
             }
             else -> {
                 println(exp)
@@ -101,14 +106,13 @@ fun convert(
 
     // returns the register index the expression goes into
     fun generateExpression(exp: Expression): Int {
-        println(exp)
         return when (exp) {
             is FunctionCallExpression -> {
                 instructions.add(FunctionCallInstruction(
                         exp.functionName,
                         exp.arguments.map { generateExpression(it) }
                 ))
-                instructions.size + argCount
+                instructions.size + argCount - 1
             }
             is IdentifierExpression -> registerIndexes[exp.name]!!
             is FieldGetterExpression -> {
@@ -119,7 +123,21 @@ fun convert(
                         structReg,
                         fieldIndex
                 ))
-                instructions.size + argCount
+                instructions.size + argCount - 1
+            }
+            is AllocateStructExpression -> {
+                val structs = irStructs.filter { it.name == exp.struct }
+                if (structs.isNotEmpty()) {
+                    val irStruct = structs.last()
+                    instructions.add(AllocateInstruction(irStruct))
+                    val structIndex = instructions.size + argCount - 1
+                    // generate the field expressions and set them in the allocation
+                    val setFieldInstructions = exp.expressions.mapIndexed { i, e ->
+                        FieldSetInstruction(structIndex, i, generateExpression(e))
+                    }
+                    instructions.addAll(setFieldInstructions)
+                    structIndex
+                } else throw Exception("Can't find ${exp.struct}")
             }
             else -> -1
         }
@@ -127,7 +145,6 @@ fun convert(
 
     // go through them again and generate the instructions
     statements.map {
-        println(it)
         when (it) {
             is VariableAssignmentStatement -> {
                 generateExpression(it.expression)
