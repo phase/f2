@@ -63,7 +63,7 @@ fun convert(
                 astModule.getType(exp.functionName, mapOf())
             }
             is FieldGetterExpression -> {
-                val struct = astModule.getStruct(exp.structName)
+                val struct = variables[exp.structName]!! as AstStruct
                 struct.fields.filter { it.name == exp.fieldName }.last().type
             }
             else -> {
