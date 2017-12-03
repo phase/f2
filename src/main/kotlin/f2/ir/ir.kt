@@ -47,6 +47,10 @@ data class FieldSetInstruction(
         val valueRegisterIndex: Int
 ) : Instruction
 
-data class AllocateInstruction(
+data class HeapAllocateInstruction(
+        val type: IrStruct
+) : Instruction
+
+data class StackAllocateInstruction(
         val type: IrStruct
 ) : Instruction

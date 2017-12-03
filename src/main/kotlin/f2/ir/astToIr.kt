@@ -139,7 +139,7 @@ fun convert(
                 val structs = irStructs.filter { it.name == exp.struct }
                 if (structs.isNotEmpty()) {
                     val irStruct = structs.last()
-                    instructions.add(AllocateInstruction(irStruct))
+                    instructions.add(HeapAllocateInstruction(irStruct))
                     val structIndex = registerIndex++ + argCount
                     // generate the field expressions and set them in the allocation
                     val setFieldInstructions = exp.expressions.mapIndexed { i, e ->
