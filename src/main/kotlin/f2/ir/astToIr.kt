@@ -104,15 +104,25 @@ fun convert(
         }
     }
 
+    var registerIndex = 0
+
     // returns the register index the expression goes into
     fun generateExpression(exp: Expression): Int {
         return when (exp) {
             is FunctionCallExpression -> {
                 instructions.add(FunctionCallInstruction(
                         exp.functionName,
-                        exp.arguments.map { generateExpression(it) }
+                        exp.arguments.map {
+                            val i = generateExpression(it)
+                            // if the expression is an identifier, that means there is already a register for it and
+                            // we don't need to store it in another one
+                            if (it !is IdentifierExpression) {
+                                instructions.add(StoreInstruction(i))
+                            }
+                            i
+                        }
                 ))
-                instructions.size + argCount - 1
+                registerIndex++ + argCount
             }
             is IdentifierExpression -> registerIndexes[exp.name]!!
             is FieldGetterExpression -> {
@@ -123,19 +133,20 @@ fun convert(
                         structReg,
                         fieldIndex
                 ))
-                instructions.size + argCount - 1
+                registerIndex++ + argCount
             }
             is AllocateStructExpression -> {
                 val structs = irStructs.filter { it.name == exp.struct }
                 if (structs.isNotEmpty()) {
                     val irStruct = structs.last()
                     instructions.add(AllocateInstruction(irStruct))
-                    val structIndex = instructions.size + argCount - 1
+                    val structIndex = registerIndex++ + argCount
                     // generate the field expressions and set them in the allocation
                     val setFieldInstructions = exp.expressions.mapIndexed { i, e ->
                         FieldSetInstruction(structIndex, i, generateExpression(e))
                     }
                     instructions.addAll(setFieldInstructions)
+                    registerIndex += setFieldInstructions.size
                     structIndex
                 } else throw Exception("Can't find ${exp.struct}")
             }
@@ -147,7 +158,8 @@ fun convert(
     statements.map {
         when (it) {
             is VariableAssignmentStatement -> {
-                generateExpression(it.expression)
+                val i = generateExpression(it.expression)
+                instructions.add(StoreInstruction(i))
             }
             is ReturnStatement -> {
                 val i = generateExpression(it.expression)

@@ -23,6 +23,10 @@ class IrStruct(
 
 interface Instruction
 
+data class StoreInstruction(
+        val register: Int
+) : Instruction
+
 data class FunctionCallInstruction(
         val functionName: String,
         val registerIndexes: List<Int>
