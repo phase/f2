@@ -159,7 +159,7 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
                     LLVMBuildStore(builder, value, gep)
                 }
                 is StackAllocateInstruction -> {
-                    val struct = getLLVMType(i.type)
+                    val struct = LLVMGetElementType(getLLVMType(i.type))
                     valueStack.push(LLVMBuildAlloca(builder, struct, ""))
                 }
                 is HeapAllocateInstruction -> {
