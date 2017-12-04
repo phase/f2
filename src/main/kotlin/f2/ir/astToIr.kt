@@ -81,7 +81,7 @@ fun convert(
     val statements = astFunctionDefinition.statements
 
     // type check statements and insert variables into the register tables
-    statements.map {
+    statements.forEach {
         when (it) {
             is VariableAssignmentStatement -> {
                 val type = typeCheck(it.expression)
@@ -141,12 +141,16 @@ fun convert(
                     val irStruct = structs.last()
                     instructions.add(HeapAllocateInstruction(irStruct))
                     val structIndex = registerIndex++ + argCount
+                    instructions.add(StoreInstruction(structIndex))
+                    // keep track of identified registers
+                    var idRegs = 0
                     // generate the field expressions and set them in the allocation
                     val setFieldInstructions = exp.expressions.mapIndexed { i, e ->
+                        if (e is IdentifierExpression) idRegs++
                         FieldSetInstruction(structIndex, i, generateExpression(e))
                     }
                     instructions.addAll(setFieldInstructions)
-                    registerIndex += setFieldInstructions.size
+                    registerIndex += setFieldInstructions.size - idRegs
                     structIndex
                 } else throw Exception("Can't find ${exp.struct}")
             }
@@ -155,11 +159,12 @@ fun convert(
     }
 
     // go through them again and generate the instructions
-    statements.map {
+    statements.forEach {
         when (it) {
             is VariableAssignmentStatement -> {
                 val i = generateExpression(it.expression)
-                instructions.add(StoreInstruction(i))
+                if (it.expression !is AllocateStructExpression)
+                    instructions.add(StoreInstruction(i))
             }
             is ReturnStatement -> {
                 val i = generateExpression(it.expression)
