@@ -1,11 +1,18 @@
 package f2.ir
 
-import f2.ast.Type
+import f2.type.Type
 
 data class IrModule(
         val name: String,
+        val externalFunctions: List<IrExternalFunction>,
         val functions: List<IrFunction>,
         val structs: List<IrStruct>
+)
+
+data class IrExternalFunction(
+        val name: String,
+        val returnType: Type,
+        val arguments: List<Type>
 )
 
 data class IrFunction(

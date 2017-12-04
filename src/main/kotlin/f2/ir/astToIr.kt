@@ -1,6 +1,9 @@
 package f2.ir
 
 import f2.ast.*
+import f2.type.Type
+import f2.type.UndefinedType
+import f2.type.primitives
 
 fun convert(astModule: AstModule): IrModule {
     val irStructs = astModule.structs.map {
@@ -17,7 +20,15 @@ fun convert(astModule: AstModule): IrModule {
         }
         convert(astModule, dec, it, irStructs)
     }
-    return IrModule(astModule.name, irFunctions, irStructs)
+
+    val declarationsWithoutDefinition = astModule.functionDeclarations.filter {
+        val decName = it.name
+        astModule.functionDefinitions.filter { it.name == decName }.isEmpty()
+    }
+
+    val irExternalFunctions = declarationsWithoutDefinition.map { convert(it, irStructs) }
+
+    return IrModule(astModule.name, irExternalFunctions, irFunctions, irStructs)
 }
 
 fun convert(
@@ -25,6 +36,20 @@ fun convert(
         astStruct: AstStruct
 ): IrStruct {
     return IrStruct(astStruct.name, astStruct.fields.map { it.type })
+}
+
+fun convert(
+        astFunctionDeclaration: AstFunctionDeclaration,
+        irStructs: List<IrStruct>
+): IrExternalFunction {
+    val types: MutableList<Type> = irStructs.map { it as Type }.toMutableList()
+    types.addAll(primitives)
+    val irReturnType = types.find { it.name == astFunctionDeclaration.returnType.name }!!
+    val argumentTypes = astFunctionDeclaration.argumentTypes.map {
+        val argType = it.name
+        types.find { it.name == argType }!!
+    }
+    return IrExternalFunction(astFunctionDeclaration.name, irReturnType, argumentTypes)
 }
 
 fun convert(

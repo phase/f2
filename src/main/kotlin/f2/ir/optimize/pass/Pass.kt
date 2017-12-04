@@ -1,6 +1,6 @@
 package f2.ir.optimize.pass
 
-import f2.ast.Type
+import f2.type.Type
 import f2.ir.Instruction
 import f2.ir.IrFunction
 import f2.ir.IrModule
@@ -9,7 +9,7 @@ abstract class Pass(val irModule: IrModule) {
 
     fun optimize(): IrModule {
         val functions = irModule.functions.map { optimize(it) }
-        return IrModule(irModule.name, functions, irModule.structs)
+        return IrModule(irModule.name, irModule.externalFunctions, functions, irModule.structs)
     }
 
     fun optimize(irFunction: IrFunction): IrFunction {

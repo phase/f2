@@ -1,8 +1,7 @@
 package f2.ir.optimize.pass
 
-import f2.ast.Type
+import f2.type.Type
 import f2.ir.*
-import java.util.*
 
 /**
  * Translates HeapAllocation instructions to StackAllocation Instructions

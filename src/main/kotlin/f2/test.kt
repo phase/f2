@@ -1,15 +1,15 @@
 package f2
 
 import f2.ast.*
-import f2.backend.LLVMBackend
+import f2.backend.llvm.LLVMBackend
 import f2.ir.IrModule
 import f2.ir.convert
 import f2.ir.optimize.pass.HeapToStackPass
+import f2.type.Int32
 import java.io.File
 
 fun main(args: Array<String>) {
-    val int = Type("Int")
-    val X = AstStruct("X", listOf(AstField("a", int)), listOf(), listOf(), listOf())
+    val X = AstStruct("X", listOf(AstField("a", Int32)), listOf(), listOf(), listOf())
     /*
     struct X {
       let a : Int
@@ -36,11 +36,11 @@ fun main(args: Array<String>) {
     val program: AstModule = AstModule(
             "addition",
             listOf(
-                    AstFunctionDeclaration("internal_add_i32", listOf(int, int), int),
-                    AstFunctionDeclaration("add", listOf(int, int), int),
-                    AstFunctionDeclaration("f", listOf(X), int),
-                    AstFunctionDeclaration("g", listOf(int), X),
-                    AstFunctionDeclaration("h", listOf(int), int)
+                    AstFunctionDeclaration("internal_add_i32", listOf(Int32, Int32), Int32),
+                    AstFunctionDeclaration("add", listOf(Int32, Int32), Int32),
+                    AstFunctionDeclaration("f", listOf(X), Int32),
+                    AstFunctionDeclaration("g", listOf(Int32), X),
+                    AstFunctionDeclaration("h", listOf(Int32), Int32)
             ),
             listOf(
                     AstFunctionDefinition("add", listOf("x", "y"),

@@ -1,5 +1,8 @@
 package f2.ast
 
+import f2.type.Type
+import f2.type.UndefinedType
+
 data class AstModule(
         val name: String,
         val functionDeclarations: List<AstFunctionDeclaration>,
