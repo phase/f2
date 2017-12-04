@@ -1,7 +1,9 @@
 package f2
 
 import f2.ast.*
+import f2.ir.IrModule
 import f2.ir.convert
+import f2.ir.optimize.pass.HeapToStackPass
 
 fun main(args: Array<String>) {
     val int = Type("Int")
@@ -23,6 +25,11 @@ fun main(args: Array<String>) {
 
     g :: Int -> X
     g a = new X(a).
+
+    h :: Int -> Int
+    h a = let x = new X(a),
+          let r = x.a,
+          return a.
      */
     val program: AstModule = AstModule(
             "addition",
@@ -30,7 +37,8 @@ fun main(args: Array<String>) {
                     AstFunctionDeclaration("internal_add_i32", listOf(int, int), int),
                     AstFunctionDeclaration("add", listOf(int, int), int),
                     AstFunctionDeclaration("f", listOf(X), int),
-                    AstFunctionDeclaration("g", listOf(int), X)
+                    AstFunctionDeclaration("g", listOf(int), X),
+                    AstFunctionDeclaration("h", listOf(int), int)
             ),
             listOf(
                     AstFunctionDefinition("add", listOf("x", "y"),
@@ -78,12 +86,30 @@ fun main(args: Array<String>) {
                                     ),
                                     ReturnStatement(IdentifierExpression("z"))
                             )
+                    ),
+                    AstFunctionDefinition("h", listOf("a"),
+                            listOf(
+                                    VariableAssignmentStatement("x",
+                                            AllocateStructExpression("X",
+                                                    listOf(
+                                                            IdentifierExpression("a")
+                                                    )
+                                            )
+                                    ),
+                                    VariableAssignmentStatement("r",
+                                            FieldGetterExpression("x", "a")
+                                    ),
+                                    ReturnStatement(IdentifierExpression("r"))
+                            )
                     )
             ),
             listOf(X),
             listOf()
     )
 
-    val ir = convert(program)
+    var ir = convert(program)
+    println(ir)
+    val passes: List<(IrModule) -> IrModule> = listOf({ i -> HeapToStackPass(i).optimize() })
+    passes.forEach { ir = it(ir) }
     println(ir)
 }

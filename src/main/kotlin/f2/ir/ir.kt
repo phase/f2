@@ -22,35 +22,37 @@ class IrStruct(
 ) : Type(name)
 
 interface Instruction
+interface ValueInstruction : Instruction // Produces a value
+interface VoidInstruction : Instruction // Doesn't produce a value
 
 data class StoreInstruction(
         val register: Int
-) : Instruction
+) : VoidInstruction
 
 data class FunctionCallInstruction(
         val functionName: String,
         val registerIndexes: List<Int>
-) : Instruction
+) : ValueInstruction
 
 data class ReturnInstruction(
         val registerIndex: Int
-) : Instruction
+) : VoidInstruction
 
 data class FieldGetInstruction(
         val registerIndex: Int,
         val fieldIndex: Int
-) : Instruction
+) : ValueInstruction
 
 data class FieldSetInstruction(
         val structRegisterIndex: Int,
         val fieldIndex: Int,
         val valueRegisterIndex: Int
-) : Instruction
+) : VoidInstruction
 
 data class HeapAllocateInstruction(
         val type: IrStruct
-) : Instruction
+) : ValueInstruction
 
 data class StackAllocateInstruction(
         val type: IrStruct
-) : Instruction
+) : ValueInstruction
