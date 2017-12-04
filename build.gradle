@@ -18,8 +18,17 @@ repositories {
     mavenCentral()
 }
 
+// https://github.com/bytedeco/javacpp-presets/wiki/Issues-with-Build-Tools#gradle
+configurations {
+    all*.exclude group: "org.bytedeco", module: "javacpp-presets"
+}
+
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+
+    compile "org.bytedeco:javacpp:1.3"
+    compile "org.bytedeco.javacpp-presets:llvm:3.9.0-1.3"
+    compile "org.bytedeco.javacpp-presets:llvm:3.9.0-1.3:linux-x86_64"
 }
 
 compileKotlin {
