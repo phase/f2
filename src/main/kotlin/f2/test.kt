@@ -1,9 +1,11 @@
 package f2
 
 import f2.ast.*
+import f2.backend.LLVMBackend
 import f2.ir.IrModule
 import f2.ir.convert
 import f2.ir.optimize.pass.HeapToStackPass
+import java.io.File
 
 fun main(args: Array<String>) {
     val int = Type("Int")
@@ -112,4 +114,9 @@ fun main(args: Array<String>) {
     val passes: List<(IrModule) -> IrModule> = listOf({ i -> HeapToStackPass(i).optimize() })
     passes.forEach { ir = it(ir) }
     println(ir)
+
+    val file = File.createTempFile("llvm", "out.ll")
+    val backend = LLVMBackend(ir)
+    backend.output(file)
+    println(file.readText())
 }
