@@ -35,7 +35,11 @@ fun convert(
         astModule: AstModule,
         astStruct: AstStruct
 ): IrStruct {
-    return IrStruct(astStruct.name, astStruct.fields.map { it.type })
+    return IrStruct(astStruct.name, astStruct.fields.map {
+        if (it.type is AstStruct) {
+            convert(astModule, it.type)
+        } else it.type
+    })
 }
 
 fun convert(
@@ -58,27 +62,22 @@ fun convert(
         astFunctionDefinition: AstFunctionDefinition,
         irStructs: List<IrStruct>
 ): IrFunction {
+
+    fun AstStruct.toIrStruct(): IrStruct = irStructs.find { it.name == this.name }!!
+
+    fun Type.toIrType(): Type = if (this is AstStruct) this.toIrStruct() else this
+
     val functionName = astFunctionDeclaration.name
-    val returnType: Type = run {
-        val r = astFunctionDeclaration.returnType
-        if (r is AstStruct) {
-            irStructs.find { it.name == r.name }!!
-        } else r
-    }
+    val returnType: Type = astFunctionDeclaration.returnType.toIrType()
     val argCount = astFunctionDeclaration.argumentTypes.size
     val variables: MutableMap<String, Type> = astFunctionDefinition.arguments.mapIndexed { i, s ->
         val astType = astFunctionDeclaration.argumentTypes[i]
-        val type = if (astType is AstStruct) {
-            irStructs.find { it.name == astType.name }!!
-        } else astType
+        val type = astType.toIrType()
         s to type
     }.toMap().toMutableMap()
     val registerIndexes: MutableMap<String, Int> = astFunctionDefinition.arguments.mapIndexed { i, s -> s to i }.toMap().toMutableMap()
     val registers: MutableList<Type> = astFunctionDeclaration.argumentTypes.map {
-        if (it is AstStruct) {
-            val structName = it.name
-            irStructs.find { it.name == structName }!!
-        } else it
+        it.toIrType()
     }.toMutableList()
     val instructions: MutableList<Instruction> = mutableListOf()
 
@@ -105,9 +104,10 @@ fun convert(
                 astModule.getType(exp.functionName, mapOf())
             }
             is FieldGetterExpression -> {
+                println(variables)
                 val irStruct = variables[exp.structName]!! as IrStruct
                 val astStruct = astModule.getStruct(irStruct.name)
-                astStruct.fields.filter { it.name == exp.fieldName }.last().type
+                astStruct.fields.filter { it.name == exp.fieldName }.last().type.toIrType()
             }
             is AllocateStructExpression -> {
                 exp.expressions.forEach { typeCheck(it) }
@@ -134,7 +134,7 @@ fun convert(
             is FieldSetterStatement -> {
                 val structType = variables[it.structName]!! as AstStruct
                 val fieldName = it.fieldName
-                val fieldType = structType.fields.filter { it.name == fieldName }.last().type
+                val fieldType = structType.fields.filter { it.name == fieldName }.last().type.toIrType()
                 val expType = typeCheck(it.expression)
                 assert(expType == fieldType)
             }

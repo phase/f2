@@ -10,9 +10,13 @@ import java.io.File
 
 fun main(args: Array<String>) {
     val X = AstStruct("X", listOf(AstField("a", Int32)), listOf(), listOf(), listOf())
+    val Y = AstStruct("Y", listOf(AstField("x", X)), listOf(), listOf(), listOf())
     /*
     struct X {
       let a : Int
+    }
+    struct Y {
+      let x : X
     }
     internal_add_i32 :: Int -> Int -> Int
     add :: Int -> Int -> Int
@@ -32,6 +36,18 @@ fun main(args: Array<String>) {
     h a = let x = new X(a),
           let r = x.a,
           return a.
+
+    i :: Int32 -> Y
+    i a = let x = new X(a),
+          let y = new Y(x),
+          return y.
+
+    j :: Int32 -> Int32
+    j a = let x = new X(a),
+          let y = new Y(x),
+          let w = y.x,
+          let b = w.a,
+          return b.
      */
     val program: AstModule = AstModule(
             "addition",
@@ -40,7 +56,9 @@ fun main(args: Array<String>) {
                     AstFunctionDeclaration("add", listOf(Int32, Int32), Int32),
                     AstFunctionDeclaration("f", listOf(X), Int32),
                     AstFunctionDeclaration("g", listOf(Int32), X),
-                    AstFunctionDeclaration("h", listOf(Int32), Int32)
+                    AstFunctionDeclaration("h", listOf(Int32), Int32),
+                    AstFunctionDeclaration("i", listOf(Int32), Y),
+                    AstFunctionDeclaration("j", listOf(Int32), Int32)
             ),
             listOf(
                     AstFunctionDefinition("add", listOf("x", "y"),
@@ -103,9 +121,49 @@ fun main(args: Array<String>) {
                                     ),
                                     ReturnStatement(IdentifierExpression("r"))
                             )
+                    ),
+                    AstFunctionDefinition("i", listOf("a"),
+                            listOf(
+                                    VariableAssignmentStatement("x",
+                                            AllocateStructExpression("X",
+                                                    listOf(
+                                                            IdentifierExpression("a")
+                                                    )
+                                            )
+                                    ),
+                                    VariableAssignmentStatement("y",
+                                            AllocateStructExpression("Y",
+                                                    listOf(
+                                                            IdentifierExpression("x")
+                                                    )
+                                            )
+                                    ),
+                                    ReturnStatement(IdentifierExpression("y"))
+                            )
+                    ),
+                    AstFunctionDefinition("j", listOf("a"),
+                            listOf(
+                                    VariableAssignmentStatement("x",
+                                            AllocateStructExpression("X",
+                                                    listOf(
+                                                            IdentifierExpression("a")
+                                                    )
+                                            )
+                                    ),
+                                    VariableAssignmentStatement("y",
+                                            AllocateStructExpression("Y",
+                                                    listOf(
+                                                            IdentifierExpression("x")
+                                                    )
+                                            )
+                                    ),
+                                    VariableAssignmentStatement("w", FieldGetterExpression("y", "x")),
+                                    VariableAssignmentStatement("b", FieldGetterExpression("w", "a")),
+                                    ReturnStatement(IdentifierExpression("b"))
+                            )
                     )
             ),
-            listOf(X),
+            listOf(X, Y),
             listOf()
     )
 

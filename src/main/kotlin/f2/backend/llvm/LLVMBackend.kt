@@ -21,8 +21,8 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
     val structTypes = mutableMapOf<String, LLVMTypeRef>()
 
     // TODO: Move to stdlib
-    val malloc : LLVMValueRef
-    val free : LLVMValueRef
+    val malloc: LLVMValueRef
+    val free: LLVMValueRef
 
     init {
         LLVMLinkInMCJIT()
@@ -127,7 +127,7 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
         val valueStack = Stack<LLVMValueRef>()
         val registerValueRefs = mutableMapOf<Int, LLVMValueRef>()
 
-        (0..irFunction.argumentCount-1).forEach { registerValueRefs.put(it, LLVMGetParam(function, it)) }
+        (0..irFunction.argumentCount - 1).forEach { registerValueRefs.put(it, LLVMGetParam(function, it)) }
 
         fun generate(i: Instruction, registers: List<Type>) {
             println("${irFunction.name} valueStack:${valueStack.size} registers:${registerValueRefs.size} $i")
@@ -146,14 +146,12 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
                 }
                 is FieldGetInstruction -> {
                     val struct = registerValueRefs[i.registerIndex]!!
-
                     val gep = LLVMBuildStructGEP(builder, struct, i.fieldIndex, "")
                     val load = LLVMBuildLoad(builder, gep, "")
                     valueStack.push(load)
                 }
                 is FieldSetInstruction -> {
                     val struct = registerValueRefs[i.structRegisterIndex]!!
-                    LLVMDumpValue(struct)
                     val gep = LLVMBuildStructGEP(builder, struct, i.fieldIndex, "")
                     val value = registerValueRefs[i.valueRegisterIndex]!!
                     LLVMBuildStore(builder, value, gep)
@@ -196,13 +194,7 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
                 if (structTypes.containsKey(type.name)) {
                     structTypes[type.name]!!
                 } else {
-                    val fieldTypes = type.fields.map {
-                        if (it is IrStruct) {
-                            LLVMPointerType(getLLVMType(it), 0)
-                        } else {
-                            getLLVMType(it)
-                        }
-                    }
+                    val fieldTypes = type.fields.map { getLLVMType(it) }
                     val llvmStructType = LLVMStructCreateNamed(context, type.name)
                     LLVMStructSetBody(llvmStructType, PointerPointer(*fieldTypes.toTypedArray()), type.fields.size, 0)
                     val structPointer = LLVMPointerType(llvmStructType, 0)
@@ -222,6 +214,7 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
             is Int64 -> 8L
             is Float32 -> 4L
             is Float64 -> 8L
+            is IrStruct -> 8L
             else -> throw Exception("Can't find type $it")
         }
     }.sum()

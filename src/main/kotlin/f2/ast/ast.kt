@@ -57,7 +57,11 @@ class AstStruct(
         val traits: List<AstTrait>,
         val functionDeclarations: List<AstFunctionDeclaration>,
         val functionDefinitions: List<AstFunctionDefinition>
-) : Type(name)
+) : Type(name) {
+    override fun toString(): String {
+        return "AstStruct{$name}"
+    }
+}
 
 class AstTrait(
         name: String,

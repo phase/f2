@@ -23,6 +23,7 @@ class HeapToStackPass(irModule: IrModule) : Pass(irModule) {
         var lastValue: Pair<Int, ValueInstruction>? = null
         val heapInstructionLocation: MutableMap<Int/*reg*/, Int/*index in ins*/> = mutableMapOf()
         val allocationsNotSeen = mutableListOf<Int/*reg*/>()
+        val structReliance = mutableMapOf<Int/*reg*/, MutableList<Int/*reg*/>>()
 
         ins.forEachIndexed { index, instruction ->
             if (instruction is HeapAllocateInstruction) {
@@ -40,8 +41,25 @@ class HeapToStackPass(irModule: IrModule) : Pass(irModule) {
             }
 
             if (instruction is ReturnInstruction) {
-                if (regs[instruction.registerIndex] is IrStruct) {
-                    allocationsNotSeen.remove(instruction.registerIndex)
+                val reg = instruction.registerIndex
+                if (regs[reg] is IrStruct) {
+                    if (allocationsNotSeen.contains(reg)) {
+                        allocationsNotSeen.remove(reg)
+                    }
+                    structReliance[reg]?.forEach {
+                        if (allocationsNotSeen.contains(it)) {
+                            allocationsNotSeen.remove(it)
+                        }
+                    }
+                }
+            }
+
+            if (instruction is FieldSetInstruction) {
+                if (regs[instruction.valueRegisterIndex] is IrStruct) {
+                    if (!structReliance.containsKey(instruction.structRegisterIndex)) {
+                        structReliance[instruction.structRegisterIndex] = mutableListOf()
+                    }
+                    structReliance[instruction.structRegisterIndex]?.add(instruction.valueRegisterIndex)
                 }
             }
         }
