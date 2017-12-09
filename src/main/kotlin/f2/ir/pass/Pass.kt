@@ -16,7 +16,7 @@ abstract class Pass(val irModule: IrModule) {
         val optimizedInstructions: Pair<List<Type>, List<Instruction>> =
                 optimizeInstructions(irFunction, irFunction.registerTypes, irFunction.instructions)
 
-        return IrFunction(irFunction.name, irFunction.returnType, irFunction.argumentCount,
+        return IrFunction(irFunction.name, irFunction.returnType, irFunction.permissions, irFunction.argumentCount,
                 optimizedInstructions.first, optimizedInstructions.second)
     }
 

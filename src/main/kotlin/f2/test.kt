@@ -52,13 +52,13 @@ fun main(args: Array<String>) {
     val program: AstModule = AstModule(
             "addition",
             listOf(
-                    AstFunctionDeclaration("internal_add_i32", listOf(Int32, Int32), Int32),
-                    AstFunctionDeclaration("add", listOf(Int32, Int32), Int32),
-                    AstFunctionDeclaration("f", listOf(X), Int32),
-                    AstFunctionDeclaration("g", listOf(Int32), X),
-                    AstFunctionDeclaration("h", listOf(Int32), Int32),
-                    AstFunctionDeclaration("i", listOf(Int32), Y),
-                    AstFunctionDeclaration("j", listOf(Int32), Int32)
+                    AstFunctionDeclaration("internal_add_i32", listOf(Int32, Int32), Int32, listOf()),
+                    AstFunctionDeclaration("add", listOf(Int32, Int32), Int32, listOf()),
+                    AstFunctionDeclaration("f", listOf(X), Int32, listOf()),
+                    AstFunctionDeclaration("g", listOf(Int32), X, listOf()),
+                    AstFunctionDeclaration("h", listOf(Int32), Int32, listOf()),
+                    AstFunctionDeclaration("i", listOf(Int32), Y, listOf()),
+                    AstFunctionDeclaration("j", listOf(Int32), Int32, listOf())
             ),
             listOf(
                     AstFunctionDefinition("add", listOf("x", "y"),

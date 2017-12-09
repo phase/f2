@@ -1,5 +1,6 @@
 package f2.ast
 
+import f2.permission.Permission
 import f2.type.Type
 import f2.type.UndefinedType
 
@@ -37,7 +38,8 @@ data class AstModule(
 data class AstFunctionDeclaration(
         val name: String,
         val argumentTypes: List<Type>,
-        val returnType: Type
+        val returnType: Type,
+        val permissions: List<Permission>
 )
 
 data class AstFunctionDefinition(

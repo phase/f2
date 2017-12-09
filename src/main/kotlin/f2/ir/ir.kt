@@ -1,5 +1,6 @@
 package f2.ir
 
+import f2.permission.Permission
 import f2.type.Type
 
 data class IrModule(
@@ -18,6 +19,7 @@ data class IrExternalFunction(
 data class IrFunction(
         val name: String,
         val returnType: Type,
+        val permissions: List<Permission>,
         val argumentCount: Int,
         val registerTypes: List<Type>,
         val instructions: List<Instruction>

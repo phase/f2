@@ -15,7 +15,7 @@ fun convert(astModule: AstModule): IrModule {
         val dec = run {
             val possibleDecs = astModule.functionDeclarations.filter { it.name == defName }
             if (possibleDecs.isNotEmpty()) possibleDecs[0] else {
-                AstFunctionDeclaration(defName, (0..it.arguments.size - 1).map { UndefinedType }, UndefinedType)
+                AstFunctionDeclaration(defName, (0..it.arguments.size - 1).map { UndefinedType }, UndefinedType, listOf())
             }
         }
         convert(astModule, dec, it, irStructs)
@@ -225,5 +225,5 @@ fun convert(
         }
     }
 
-    return IrFunction(functionName, returnType, astFunctionDeclaration.argumentTypes.size, registers, instructions)
+    return IrFunction(functionName, returnType, astFunctionDeclaration.permissions, astFunctionDeclaration.argumentTypes.size, registers, instructions)
 }
