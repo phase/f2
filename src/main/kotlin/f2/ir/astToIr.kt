@@ -116,7 +116,12 @@ fun convert(
                 astStruct.fields.filter { it.name == exp.fieldName }.last().type.toIrType()
             }
             is AllocateStructExpression -> {
-                exp.expressions.forEach { typeCheck(it) }
+                exp.expressions.forEachIndexed { _, e ->
+                    val argType = typeCheck(e)
+                    if (e !is IdentifierExpression) {
+                        registers.add(argType)
+                    }
+                }
                 irStructs.find { it.name == exp.struct }!!
             }
             else -> {
@@ -187,16 +192,21 @@ fun convert(
             is AllocateStructExpression -> {
                 val structs = irStructs.filter { it.name == exp.struct }
                 if (structs.isNotEmpty()) {
+                    // generate the arguments before the struct
+                    val expressionRegisters = exp.expressions.map { generateExpression(it) }
+
+                    // generate the struct
                     val irStruct = structs.last()
                     instructions.add(HeapAllocateInstruction(irStruct))
                     val structIndex = registerIndex++ + argCount
                     instructions.add(StoreInstruction(structIndex))
+
                     // keep track of identified registers
                     var idRegs = 0
                     // generate the field expressions and set them in the allocation
                     val setFieldInstructions = exp.expressions.mapIndexed { i, e ->
                         if (e is IdentifierExpression) idRegs++
-                        FieldSetInstruction(structIndex, i, generateExpression(e))
+                        FieldSetInstruction(structIndex, i, expressionRegisters[i])
                     }
                     instructions.addAll(setFieldInstructions)
                     registerIndex += setFieldInstructions.size - idRegs

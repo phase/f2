@@ -46,7 +46,18 @@ j a = let x = X{a},
       let w = y.x,
       w.a.
 """
-    val module: AstModule = compileString("parser_test", code)
+    val code2 = """
+struct X {
+  a : Int32
+}
+struct Y {
+  x : X
+}
+
+i :: Int32 -> Y
+i a = Y{X{a}}.
+"""
+    val module: AstModule = compileString("parser_test", code2)
     println(module)
 
     var ir = convert(module)
