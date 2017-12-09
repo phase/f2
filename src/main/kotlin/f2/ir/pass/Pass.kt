@@ -1,4 +1,4 @@
-package f2.ir.optimize.pass
+package f2.ir.pass
 
 import f2.type.Type
 import f2.ir.Instruction

@@ -1,7 +1,8 @@
-package f2.ir.optimize.pass
+package f2.ir.pass.optimize
 
 import f2.type.Type
 import f2.ir.*
+import f2.ir.pass.Pass
 
 /**
  * Translates HeapAllocation instructions to StackAllocation Instructions

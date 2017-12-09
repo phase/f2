@@ -4,7 +4,7 @@ import f2.ast.*
 import f2.backend.llvm.LLVMBackend
 import f2.ir.IrModule
 import f2.ir.convert
-import f2.ir.optimize.pass.HeapToStackPass
+import f2.ir.pass.optimize.HeapToStackPass
 import f2.type.Int32
 import java.io.File
 
