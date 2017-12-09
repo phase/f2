@@ -1,9 +1,7 @@
 package f2.ir.pass.semantics
 
-import f2.ir.FieldSetInstruction
-import f2.ir.Instruction
-import f2.ir.IrFunction
-import f2.ir.IrModule
+import f2.ast.reportError
+import f2.ir.*
 import f2.ir.pass.Pass
 import f2.type.Type
 
@@ -17,11 +15,11 @@ class MemoryValidatorPass(irModule: IrModule) : Pass(irModule) {
 
         instructions.forEach {
             if (it is FieldSetInstruction) {
-                if (it.structRegisterIndex < irFunction.argumentCount) {
-                    // TODO Error: trying to modify arguments
+                if (it.structRegisterIndex < irFunction.argumentCount && registers[it.structRegisterIndex] is IrStruct) {
+                    reportError(irModule.source, it.debugInfo, "Trying to modify arguments without +Mutable")
                 }
-                if (it.valueRegisterIndex < irFunction.argumentCount) {
-                    // TODO Error: trying to store argument pointer into a local struct
+                if (it.valueRegisterIndex < irFunction.argumentCount && registers[it.valueRegisterIndex] is IrStruct) {
+                    reportError(irModule.source, it.debugInfo, "Trying to store argument pointer into a local struct")
                 }
             }
         }

@@ -6,6 +6,7 @@ import f2.backend.llvm.LLVMBackend
 import f2.ir.IrModule
 import f2.ir.convert
 import f2.ir.pass.optimize.HeapToStackPass
+import f2.ir.pass.semantics.MemoryValidatorPass
 import f2.parser.LangLexer
 import f2.parser.LangParser
 import org.antlr.v4.runtime.ANTLRInputStream
@@ -44,6 +45,13 @@ j a = let x = X{a},
       let y = Y{x},
       let w = y.x,
       w.a.
+
+k :: X -> Y
+k x = Y{x}.
+
+
+
+
 """
     val module: AstModule = compileString("parser_test", code)
     println(module)
@@ -51,7 +59,10 @@ j a = let x = X{a},
     var ir = convert(module)
     println(ir)
 
-    val passes: List<(IrModule) -> IrModule> = listOf({ i -> HeapToStackPass(i).optimize() })
+    val passes: List<(IrModule) -> IrModule> = listOf(
+            { i -> HeapToStackPass(i).optimize() },
+            { i -> MemoryValidatorPass(i).optimize()}
+    )
     passes.forEach { ir = it(ir) }
     println(ir)
 
