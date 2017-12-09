@@ -194,7 +194,8 @@ struct Y {
   x : X
 }
 
-internal_add_i32 :: Int32 -> Int32 -> Int32
+internal_add_i32 :: Int32 -> Int32 -> Int32 +External
+
 add :: Int32 -> Int32 -> Int32
 add x y = internal_add_i32(x, y).
 

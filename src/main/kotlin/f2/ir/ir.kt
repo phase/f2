@@ -13,7 +13,8 @@ data class IrModule(
 data class IrExternalFunction(
         val name: String,
         val returnType: Type,
-        val arguments: List<Type>
+        val arguments: List<Type>,
+        val permissions: List<Permission>
 )
 
 data class IrFunction(

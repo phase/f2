@@ -1,6 +1,7 @@
 package f2.ir
 
 import f2.ast.*
+import f2.permission.ExternalPermission
 import f2.type.Type
 import f2.type.UndefinedType
 import f2.type.primitives
@@ -27,6 +28,11 @@ fun convert(astModule: AstModule): IrModule {
     }
 
     val irExternalFunctions = declarationsWithoutDefinition.map { convert(it, irStructs) }
+    irExternalFunctions.forEach {
+        if(!it.permissions.contains(ExternalPermission)) {
+            // TODO Error
+        }
+    }
 
     return IrModule(astModule.name, irExternalFunctions, irFunctions, irStructs)
 }
@@ -53,7 +59,7 @@ fun convert(
         val argType = it.name
         types.find { it.name == argType }!!
     }
-    return IrExternalFunction(astFunctionDeclaration.name, irReturnType, argumentTypes)
+    return IrExternalFunction(astFunctionDeclaration.name, irReturnType, argumentTypes, astFunctionDeclaration.permissions)
 }
 
 fun convert(
