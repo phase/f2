@@ -16,7 +16,8 @@ fun convert(astModule: AstModule): IrModule {
         val dec = run {
             val possibleDecs = astModule.functionDeclarations.filter { it.name == defName }
             if (possibleDecs.isNotEmpty()) possibleDecs[0] else {
-                AstFunctionDeclaration(defName, (0..it.arguments.size - 1).map { UndefinedType }, UndefinedType, listOf())
+                // TODO Error
+                AstFunctionDeclaration(defName, (0..it.arguments.size - 1).map { UndefinedType }, UndefinedType, listOf(), DebugInfo(-1, -1))
             }
         }
         convert(astModule, dec, it, irStructs)
@@ -29,12 +30,12 @@ fun convert(astModule: AstModule): IrModule {
 
     val irExternalFunctions = declarationsWithoutDefinition.map { convert(it, irStructs) }
     irExternalFunctions.forEach {
-        if(!it.permissions.contains(ExternalPermission)) {
+        if (!it.permissions.contains(ExternalPermission)) {
             // TODO Error
         }
     }
 
-    return IrModule(astModule.name, irExternalFunctions, irFunctions, irStructs)
+    return IrModule(astModule.name, irExternalFunctions, irFunctions, irStructs, astModule.source)
 }
 
 fun convert(
@@ -45,7 +46,7 @@ fun convert(
         if (it.type is AstStruct) {
             convert(astModule, it.type)
         } else it.type
-    })
+    }, astStruct.debugInfo)
 }
 
 fun convert(
@@ -59,7 +60,8 @@ fun convert(
         val argType = it.name
         types.find { it.name == argType }!!
     }
-    return IrExternalFunction(astFunctionDeclaration.name, irReturnType, argumentTypes, astFunctionDeclaration.permissions)
+    return IrExternalFunction(astFunctionDeclaration.name, irReturnType, argumentTypes,
+            astFunctionDeclaration.permissions, astFunctionDeclaration.debugInfo)
 }
 
 fun convert(
@@ -164,13 +166,14 @@ fun convert(
         return when (exp) {
             is FunctionCallExpression -> {
                 instructions.add(FunctionCallInstruction(
+                        exp.debugInfo,
                         exp.functionName,
                         exp.arguments.map {
                             val i = generateExpression(it)
                             // if the expression is an identifier, that means there is already a register for it and
                             // we don't need to store it in another one
                             if (it !is IdentifierExpression) {
-                                instructions.add(StoreInstruction(i))
+                                instructions.add(StoreInstruction(it.debugInfo(), i))
                             }
                             i
                         }
@@ -184,6 +187,7 @@ fun convert(
                 val astStruct = astModule.getStruct(irStruct.name)
                 val fieldIndex = astStruct.fields.map { it.name }.indexOf(exp.fieldName)
                 instructions.add(FieldGetInstruction(
+                        exp.debugInfo,
                         structReg,
                         fieldIndex
                 ))
@@ -197,16 +201,16 @@ fun convert(
 
                     // generate the struct
                     val irStruct = structs.last()
-                    instructions.add(HeapAllocateInstruction(irStruct))
+                    instructions.add(HeapAllocateInstruction(exp.debugInfo, irStruct))
                     val structIndex = registerIndex++ + argCount
-                    instructions.add(StoreInstruction(structIndex))
+                    instructions.add(StoreInstruction(exp.debugInfo, structIndex))
 
                     // keep track of identified registers
                     var idRegs = 0
                     // generate the field expressions and set them in the allocation
                     val setFieldInstructions = exp.expressions.mapIndexed { i, e ->
                         if (e is IdentifierExpression) idRegs++
-                        FieldSetInstruction(structIndex, i, expressionRegisters[i])
+                        FieldSetInstruction(e.debugInfo(), structIndex, i, expressionRegisters[i])
                     }
                     instructions.addAll(setFieldInstructions)
                     registerIndex += setFieldInstructions.size - idRegs
@@ -223,23 +227,24 @@ fun convert(
             is VariableAssignmentStatement -> {
                 val i = generateExpression(it.expression)
                 if (it.expression !is AllocateStructExpression)
-                    instructions.add(StoreInstruction(i))
+                    instructions.add(StoreInstruction(it.debugInfo, i))
             }
             is ReturnStatement -> {
                 val i = generateExpression(it.expression)
-                instructions.add(ReturnInstruction(i))
+                instructions.add(ReturnInstruction(it.debugInfo, i))
             }
             is FieldSetterStatement -> {
                 val structReg = registerIndexes[it.structName]!!
                 val struct = variables[it.structName]!! as AstStruct
                 val fieldIndex = struct.fields.map { it.name }.indexOf(it.fieldName)
                 val i = generateExpression(it.expression)
-                instructions.add(FieldSetInstruction(structReg, fieldIndex, i))
+                instructions.add(FieldSetInstruction(it.debugInfo, structReg, fieldIndex, i))
             }
             else -> {
             }
         }
     }
 
-    return IrFunction(functionName, returnType, astFunctionDeclaration.permissions, astFunctionDeclaration.argumentTypes.size, registers, instructions)
+    return IrFunction(functionName, returnType, astFunctionDeclaration.permissions,
+            astFunctionDeclaration.argumentTypes.size, registers, instructions, astFunctionDefinition.debugInfo)
 }

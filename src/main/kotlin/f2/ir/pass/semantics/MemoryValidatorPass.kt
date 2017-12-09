@@ -18,10 +18,10 @@ class MemoryValidatorPass(irModule: IrModule) : Pass(irModule) {
         instructions.forEach {
             if (it is FieldSetInstruction) {
                 if (it.structRegisterIndex < irFunction.argumentCount) {
-                    // trying to modify arguments
+                    // TODO Error: trying to modify arguments
                 }
                 if (it.valueRegisterIndex < irFunction.argumentCount) {
-                    // trying to store argument pointer into a local struct
+                    // TODO Error: trying to store argument pointer into a local struct
                 }
             }
         }

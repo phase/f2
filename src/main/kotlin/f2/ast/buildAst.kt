@@ -43,7 +43,7 @@ class ASTBuilder(val moduleName: String, val source: String) : LangBaseVisitor<A
         val functionDeclarations = externalDeclarations.mapNotNull { it.functionDeclaration() }.map { visitFunctionDeclaration(it) }
         val functionDefinitions = externalDeclarations.mapNotNull { it.functionDefinition() }.map { visitFunctionDefinition(it) }
 
-        return AstModule(moduleName, functionDeclarations, functionDefinitions, structs, listOf())
+        return AstModule(moduleName, functionDeclarations, functionDefinitions, structs, listOf(), source)
     }
 
     override fun visitFunctionDeclaration(ctx: LangParser.FunctionDeclarationContext): AstFunctionDeclaration {
@@ -54,7 +54,7 @@ class ASTBuilder(val moduleName: String, val source: String) : LangBaseVisitor<A
         val returnType = types.last()
         val argumentTypes = types.subList(0, types.size - 1)
 
-        return AstFunctionDeclaration(name, argumentTypes, returnType, permissions)
+        return AstFunctionDeclaration(name, argumentTypes, returnType, permissions, ctx.debugInfo())
     }
 
     override fun visitFunctionDefinition(ctx: LangParser.FunctionDefinitionContext): AstFunctionDefinition {
@@ -64,22 +64,23 @@ class ASTBuilder(val moduleName: String, val source: String) : LangBaseVisitor<A
         val statements = ctx.statement().map { visitStatement(it) }.toMutableList()
 
         // convert the final expression to statements
-        statements.add(VariableAssignmentStatement("__return_expression", visitExpression(ctx.expression())))
-        statements.add(ReturnStatement(IdentifierExpression("__return_expression")))
+        val expression = ctx.expression()
+        statements.add(VariableAssignmentStatement(expression.debugInfo(), "__return_expression", visitExpression(expression)))
+        statements.add(ReturnStatement(expression.debugInfo(), IdentifierExpression(ctx.debugInfo(), "__return_expression")))
 
-        return AstFunctionDefinition(functionName, arguments, statements)
+        return AstFunctionDefinition(functionName, arguments, statements, ctx.debugInfo())
     }
 
     override fun visitStructDeclaration(ctx: LangParser.StructDeclarationContext): AstStruct {
         val name = ctx.ID().string()
         val fields = ctx.field().map { visitField(it) }
-        return AstStruct(name, fields, listOf(), listOf(), listOf())
+        return AstStruct(name, fields, listOf(), listOf(), listOf(), ctx.debugInfo())
     }
 
     override fun visitField(ctx: LangParser.FieldContext): AstField {
         val name = ctx.ID().string()
         val type = ctx.type().toType()
-        return AstField(name, type)
+        return AstField(name, type, ctx.debugInfo())
     }
 
     override fun visitStatement(ctx: LangParser.StatementContext): Statement {
@@ -87,38 +88,38 @@ class ASTBuilder(val moduleName: String, val source: String) : LangBaseVisitor<A
             val structName = it.ID(0).string()
             val fieldName = it.ID(1).string()
             val expression = visitExpression(it.expression())
-            return FieldSetterStatement(structName, fieldName, expression)
+            return FieldSetterStatement(ctx.debugInfo(), structName, fieldName, expression)
         }
         ctx.returnStatement()?.let {
             val expression = visitExpression(it.expression())
-            return ReturnStatement(expression)
+            return ReturnStatement(ctx.debugInfo(), expression)
         }
         ctx.variableAssignment()?.let {
             val name = it.ID().string()
             val expression = visitExpression(it.expression())
-            return VariableAssignmentStatement(name, expression)
+            return VariableAssignmentStatement(ctx.debugInfo(), name, expression)
         }
         throw IllegalStateException("$ctx not a statement?")
     }
 
     override fun visitExpression(ctx: LangParser.ExpressionContext): Expression {
         ctx.ID()?.string()?.let {
-            return IdentifierExpression(it)
+            return IdentifierExpression(ctx.debugInfo(), it)
         }
         ctx.allocateStruct()?.let {
             val name = it.type().ID().string()
             val arguments = it.arguments().expression().map { visitExpression(it) }
-            return AllocateStructExpression(name, arguments)
+            return AllocateStructExpression(ctx.debugInfo(), name, arguments)
         }
         ctx.fieldGetter()?.let {
             val structName = it.ID(0).string()
             val fieldName = it.ID(1).string()
-            return FieldGetterExpression(structName, fieldName)
+            return FieldGetterExpression(ctx.debugInfo(), structName, fieldName)
         }
         ctx.functionCall()?.let {
             val functionName = it.ID().string()
             val arguments = it.arguments().expression().map { visitExpression(it) }
-            return FunctionCallExpression(functionName, arguments)
+            return FunctionCallExpression(ctx.debugInfo(), functionName, arguments)
         }
         throw IllegalStateException("$ctx not an expression?")
     }

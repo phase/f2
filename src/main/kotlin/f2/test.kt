@@ -37,8 +37,7 @@ h a = let x = X{a},
       x.a.
 
 i :: Int32 -> Y
-i a = let x = X{a},
-      Y{x}.
+i a = Y{X{a}}.
 
 j :: Int32 -> Int32
 j a = let x = X{a},
@@ -46,18 +45,7 @@ j a = let x = X{a},
       let w = y.x,
       w.a.
 """
-    val code2 = """
-struct X {
-  a : Int32
-}
-struct Y {
-  x : X
-}
-
-i :: Int32 -> Y
-i a = Y{X{a}}.
-"""
-    val module: AstModule = compileString("parser_test", code2)
+    val module: AstModule = compileString("parser_test", code)
     println(module)
 
     var ir = convert(module)

@@ -71,7 +71,7 @@ class HeapToStackPass(irModule: IrModule) : Pass(irModule) {
                 val currentIns = ins[insIndex]
                 if (currentIns is HeapAllocateInstruction) {
                     val type = currentIns.type
-                    ins[insIndex] = StackAllocateInstruction(type)
+                    ins[insIndex] = StackAllocateInstruction(currentIns.debugInfo, type)
                 }
             }
         }

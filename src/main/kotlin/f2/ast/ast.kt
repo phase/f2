@@ -9,7 +9,8 @@ data class AstModule(
         val functionDeclarations: List<AstFunctionDeclaration>,
         val functionDefinitions: List<AstFunctionDefinition>,
         val structs: List<AstStruct>,
-        val traits: List<AstTrait>
+        val traits: List<AstTrait>,
+        val source: String
 ) {
     fun getType(name: String, localVariables: Map<String, Type>): Type {
         if (localVariables.containsKey(name)) return localVariables[name]!!
@@ -39,18 +40,21 @@ data class AstFunctionDeclaration(
         val name: String,
         val argumentTypes: List<Type>,
         val returnType: Type,
-        val permissions: List<Permission>
+        val permissions: List<Permission>,
+        val debugInfo: DebugInfo
 )
 
 data class AstFunctionDefinition(
         val name: String,
         val arguments: List<String>,
-        val statements: List<Statement>
+        val statements: List<Statement>,
+        val debugInfo: DebugInfo
 )
 
 data class AstField(
         val name: String,
-        val type: Type
+        val type: Type,
+        val debugInfo: DebugInfo
 )
 
 class AstStruct(
@@ -58,7 +62,8 @@ class AstStruct(
         val fields: List<AstField>,
         val traits: List<AstTrait>,
         val functionDeclarations: List<AstFunctionDeclaration>,
-        val functionDefinitions: List<AstFunctionDefinition>
+        val functionDefinitions: List<AstFunctionDefinition>,
+        val debugInfo: DebugInfo
 ) : Type(name) {
     override fun toString(): String {
         return "AstStruct{$name}"
@@ -67,6 +72,7 @@ class AstStruct(
 
 class AstTrait(
         name: String,
-        val functionDeclarations: List<AstFunctionDeclaration>
+        val functionDeclarations: List<AstFunctionDeclaration>,
+        val debugInfo: DebugInfo
 ) : Type(name)
 

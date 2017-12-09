@@ -106,6 +106,7 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
     }
 
     fun generate(irFunction: IrFunction) {
+        println("GENERATING $irFunction")
         // Setup the function
         val returnType = getLLVMType(irFunction.returnType)
         val argumentTypes = irFunction.registerTypes.subList(0, irFunction.argumentCount).map { getLLVMType(it) }

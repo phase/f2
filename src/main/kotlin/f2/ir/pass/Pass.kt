@@ -9,7 +9,7 @@ abstract class Pass(val irModule: IrModule) {
 
     fun optimize(): IrModule {
         val functions = irModule.functions.map { optimize(it) }
-        return IrModule(irModule.name, irModule.externalFunctions, functions, irModule.structs)
+        return IrModule(irModule.name, irModule.externalFunctions, functions, irModule.structs, irModule.source)
     }
 
     fun optimize(irFunction: IrFunction): IrFunction {
@@ -17,7 +17,7 @@ abstract class Pass(val irModule: IrModule) {
                 optimizeInstructions(irFunction, irFunction.registerTypes, irFunction.instructions)
 
         return IrFunction(irFunction.name, irFunction.returnType, irFunction.permissions, irFunction.argumentCount,
-                optimizedInstructions.first, optimizedInstructions.second)
+                optimizedInstructions.first, optimizedInstructions.second, irFunction.debugInfo)
     }
 
     abstract fun optimizeInstructions(
