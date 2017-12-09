@@ -13,6 +13,10 @@ buildscript {
 }
 
 apply plugin: 'kotlin'
+apply plugin: "antlr"
+apply plugin: "application"
+
+mainClassName = "f2.TestKt"
 
 repositories {
     mavenCentral()
@@ -24,6 +28,7 @@ configurations {
 }
 
 dependencies {
+    antlr "org.antlr:antlr4:4.5" // use ANTLR version 4
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
 
     compile "org.bytedeco:javacpp:1.3"
@@ -37,3 +42,12 @@ compileKotlin {
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
+
+generateGrammarSource {
+    maxHeapSize = "64m"
+    arguments += ["-visitor", "-package", "f2.parser"]
+    // Output generated sources from ANTLR into xyz.jadonfowler.compiler.parser
+    outputDirectory = new File("src/main/java/f2/parser/".toString())
+}
+
+compileKotlin.dependsOn generateGrammarSource

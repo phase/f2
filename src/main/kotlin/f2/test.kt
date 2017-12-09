@@ -1,10 +1,16 @@
 package f2
 
+import org.antlr.v4.runtime.ANTLRInputStream
+import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.ParserRuleContext
+import org.antlr.v4.runtime.RuleContext
 import f2.ast.*
 import f2.backend.llvm.LLVMBackend
 import f2.ir.IrModule
 import f2.ir.convert
 import f2.ir.pass.optimize.HeapToStackPass
+import f2.parser.LangLexer
+import f2.parser.LangParser
 import f2.type.Int32
 import java.io.File
 
@@ -167,6 +173,7 @@ fun main(args: Array<String>) {
             listOf()
     )
 
+    /*
     var ir = convert(program)
     println(ir)
     val passes: List<(IrModule) -> IrModule> = listOf({ i -> HeapToStackPass(i).optimize() })
@@ -177,4 +184,37 @@ fun main(args: Array<String>) {
     val backend = LLVMBackend(ir)
     backend.output(file)
     println(file.readText())
+    */
+
+    val code = """
+struct X {
+  a : Int
+}
+struct Y {
+  x : X
+}
+
+internal_add_i32 :: Int32 -> Int32 -> Int32
+add :: Int32 -> Int32 -> Int32
+add x y = internal_add_i32(x, y).
+
+f :: X -> Int32
+f x = x.a.
+
+g :: Int32 -> X
+g a = X{a}.
+"""
+    val module: AstModule = compileString("parser_test", code)
+    println(module)
+
+}
+
+fun compileString(moduleName: String, code: String): AstModule {
+    val stream = ANTLRInputStream(code)
+    val lexer = LangLexer(stream)
+    val tokens = CommonTokenStream(lexer)
+    val parser = LangParser(tokens)
+    val result = parser.module()
+    val astBuilder = ASTBuilder(moduleName, code)
+    return astBuilder.visitModule(result)
 }
