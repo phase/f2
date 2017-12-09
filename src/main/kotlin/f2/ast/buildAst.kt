@@ -52,7 +52,7 @@ class ASTBuilder(val moduleName: String, val source: String) : LangBaseVisitor<A
         val permissions = ctx.PERMISSION().map { it.string() }.map { getPermission(it) }
 
         val returnType = types.last()
-        val argumentTypes = types.subList(0, types.size)
+        val argumentTypes = types.subList(0, types.size - 1)
 
         return AstFunctionDeclaration(name, argumentTypes, returnType, permissions)
     }
