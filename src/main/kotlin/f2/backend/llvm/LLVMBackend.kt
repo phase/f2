@@ -106,7 +106,6 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
     }
 
     fun generate(irFunction: IrFunction) {
-        println("GENERATING $irFunction")
         // Setup the function
         val returnType = getLLVMType(irFunction.returnType)
         val argumentTypes = irFunction.registerTypes.subList(0, irFunction.argumentCount).map { getLLVMType(it) }
@@ -128,10 +127,9 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
         val valueStack = Stack<LLVMValueRef>()
         val registerValueRefs = mutableMapOf<Int, LLVMValueRef>()
 
-        (0..irFunction.argumentCount - 1).forEach { registerValueRefs.put(it, LLVMGetParam(function, it)) }
+        (0 until irFunction.argumentCount).forEach { registerValueRefs.put(it, LLVMGetParam(function, it)) }
 
         fun generate(i: Instruction, registers: List<Type>) {
-            println("${irFunction.name} valueStack:${valueStack.size} registers:${registerValueRefs.size} $i")
             when (i) {
                 is StoreInstruction -> {
                     registerValueRefs.put(i.register, valueStack.pop())

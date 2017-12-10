@@ -30,6 +30,5 @@ fun reportError(source: String, debugInfo: DebugInfo, message: String): String {
     val column = debugInfo.column
     val arrow = " ".repeat(numberLength) + "| " + "~".repeat(column) + "^"
 
-    val error = "$before$errorLine$arrow\n$after\nError: $message"
-    return error
+    return "$before$errorLine$arrow\n$after\nError: $message"
 }

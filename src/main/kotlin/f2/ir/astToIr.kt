@@ -17,7 +17,7 @@ fun convert(astModule: AstModule): IrModule {
             val possibleDecs = astModule.functionDeclarations.filter { it.name == defName }
             if (possibleDecs.isNotEmpty()) possibleDecs[0] else {
                 // TODO Error
-                AstFunctionDeclaration(defName, (0..it.arguments.size - 1).map { UndefinedType }, UndefinedType, listOf(), DebugInfo(-1, -1))
+                AstFunctionDeclaration(defName, (0 until it.arguments.size).map { UndefinedType }, UndefinedType, listOf(), DebugInfo(-1, -1))
             }
         }
         convert(astModule, dec, it, irStructs)
@@ -112,7 +112,6 @@ fun convert(
                 astModule.getType(exp.functionName, mapOf())
             }
             is FieldGetterExpression -> {
-                println(variables)
                 val irStruct = variables[exp.structName]!! as IrStruct
                 val astStruct = astModule.getStruct(irStruct.name)
                 astStruct.fields.filter { it.name == exp.fieldName }.last().type.toIrType()
@@ -127,7 +126,6 @@ fun convert(
                 irStructs.find { it.name == exp.struct }!!
             }
             else -> {
-                println(exp)
                 UndefinedType
             }
         }

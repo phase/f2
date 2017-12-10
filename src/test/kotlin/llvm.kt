@@ -13,7 +13,6 @@ class LLVMTest {
 
     @TestFactory
     fun llvmTests(): List<DynamicTest> {
-        println("this piece of shit is running")
         return Tests.pmap {
             val id = it.id.toString().padStart(4, '0')
             val outputFiles = getOutputFiles(it.id)
