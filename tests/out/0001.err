@@ -1,0 +1,5 @@
+ 8| k :: X -> Y
+ 9| k x = Y{x}.
+  | ~~~~~~~~^
+10|
+Error: Trying to store argument pointer into a local struct
