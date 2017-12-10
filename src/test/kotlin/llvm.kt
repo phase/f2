@@ -43,7 +43,7 @@ class LLVMTest {
                 DynamicTest.dynamicTest(it.name) {
                     val expectedError = errOut.readText().removeSuffix("\n")
                     val ir = compile(it.name, it.source)
-                    val errors = ir.errors.joinToString("\n").removeSuffix("\n")
+                    val errors = ir.errors.joinToString("\n\n").removeSuffix("\n")
                     assertTrue(expectedError.contains(errors),
                             "Test #$id FAILED.\n\n" +
                                     "Expected Errors:\n\n" +

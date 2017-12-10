@@ -1,0 +1,11 @@
+6| k a x =
+7|     x.a = a,
+ | ~~~~^
+8|     x.
+Error: Trying to modify arguments without +Mutable
+
+7|     x.a = a,
+8|     x.
+ | ~~~~^
+9|
+Error: Trying to return argument pointer

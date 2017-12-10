@@ -138,15 +138,22 @@ fun convert(
         when (it) {
             is VariableAssignmentStatement -> {
                 val type = typeCheck(it.expression)
-                variables.put(it.name, type)
-                registerIndexes.put(it.name, registers.size)
-                registers.add(type)
+                if (it.expression !is IdentifierExpression) {
+                    variables.put(it.name, type)
+                    registerIndexes.put(it.name, registers.size)
+                    registers.add(type)
+                } else {
+                    variables.put(it.name, type)
+                    registerIndexes.put(it.name, registers.size - 1)
+                }
             }
             is FieldSetterStatement -> {
-                val structType = variables[it.structName]!! as AstStruct
+                val irStruct = variables[it.structName]!! as IrStruct
+                val astStruct = astModule.getStruct(irStruct.name)
                 val fieldName = it.fieldName
-                val fieldType = structType.fields.filter { it.name == fieldName }.last().type.toIrType()
+                val fieldType = astStruct.fields.last { it.name == fieldName }.type.toIrType()
                 val expType = typeCheck(it.expression)
+                // TODO Error
                 assert(expType == fieldType)
             }
             is ReturnStatement -> {
@@ -178,7 +185,9 @@ fun convert(
                 ))
                 registerIndex++ + argCount
             }
-            is IdentifierExpression -> registerIndexes[exp.name]!!
+            is IdentifierExpression -> {
+                registerIndexes[exp.name]!!
+            }
             is FieldGetterExpression -> {
                 val structReg = registerIndexes[exp.structName]!!
                 val irStruct = variables[exp.structName]!! as IrStruct
@@ -224,7 +233,7 @@ fun convert(
         when (it) {
             is VariableAssignmentStatement -> {
                 val i = generateExpression(it.expression)
-                if (it.expression !is AllocateStructExpression)
+                if (it.expression !is AllocateStructExpression && it.expression !is IdentifierExpression)
                     instructions.add(StoreInstruction(it.debugInfo, i))
             }
             is ReturnStatement -> {
@@ -233,8 +242,9 @@ fun convert(
             }
             is FieldSetterStatement -> {
                 val structReg = registerIndexes[it.structName]!!
-                val struct = variables[it.structName]!! as AstStruct
-                val fieldIndex = struct.fields.map { it.name }.indexOf(it.fieldName)
+                val irStruct = variables[it.structName]!! as IrStruct
+                val astStruct = astModule.getStruct(irStruct.name)
+                val fieldIndex = astStruct.fields.map { it.name }.indexOf(it.fieldName)
                 val i = generateExpression(it.expression)
                 instructions.add(FieldSetInstruction(it.debugInfo, structReg, fieldIndex, i))
             }

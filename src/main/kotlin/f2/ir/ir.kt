@@ -13,7 +13,7 @@ data class IrModule(
         val source: String,
         val errors: MutableList<String>
 ) {
-    fun error(source: String, debugInfo: DebugInfo, message: String) {
+    fun error(debugInfo: DebugInfo, message: String) {
         errors.add(reportError(source, debugInfo, message))
     }
 }

@@ -2,7 +2,9 @@ package f2.ast
 
 import org.antlr.v4.runtime.ParserRuleContext
 
-data class DebugInfo(val line: Int, val column: Int)
+data class DebugInfo(val line: Int, val column: Int) {
+    override fun toString(): String = "($line,$column)"
+}
 
 fun ParserRuleContext.debugInfo(): DebugInfo {
     val line = this.start.line
