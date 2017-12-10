@@ -1,6 +1,7 @@
 package f2.ir
 
 import f2.ast.DebugInfo
+import f2.ast.reportError
 import f2.permission.Permission
 import f2.type.Type
 
@@ -9,8 +10,13 @@ data class IrModule(
         val externalFunctions: List<IrExternalFunction>,
         val functions: List<IrFunction>,
         val structs: List<IrStruct>,
-        val source: String
-)
+        val source: String,
+        val errors: MutableList<String>
+) {
+    fun error(source: String, debugInfo: DebugInfo, message: String) {
+        errors.add(reportError(source, debugInfo, message))
+    }
+}
 
 data class IrExternalFunction(
         val name: String,

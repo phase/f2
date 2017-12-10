@@ -1,0 +1,9 @@
+struct X {
+  a : Int32
+}
+struct Y {
+  x : X
+}
+
+k :: X -> Y
+k x = Y{x}.

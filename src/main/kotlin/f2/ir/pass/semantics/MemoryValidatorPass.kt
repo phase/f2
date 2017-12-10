@@ -16,10 +16,10 @@ class MemoryValidatorPass(irModule: IrModule) : Pass(irModule) {
         instructions.forEach {
             if (it is FieldSetInstruction) {
                 if (it.structRegisterIndex < irFunction.argumentCount && registers[it.structRegisterIndex] is IrStruct) {
-                    reportError(irModule.source, it.debugInfo, "Trying to modify arguments without +Mutable")
+                    irModule.error(irModule.source, it.debugInfo, "Trying to modify arguments without +Mutable")
                 }
                 if (it.valueRegisterIndex < irFunction.argumentCount && registers[it.valueRegisterIndex] is IrStruct) {
-                    reportError(irModule.source, it.debugInfo, "Trying to store argument pointer into a local struct")
+                    irModule.error(irModule.source, it.debugInfo, "Trying to store argument pointer into a local struct")
                 }
             }
         }

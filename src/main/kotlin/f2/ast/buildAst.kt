@@ -43,7 +43,7 @@ class ASTBuilder(val moduleName: String, val source: String) : LangBaseVisitor<A
         val functionDeclarations = externalDeclarations.mapNotNull { it.functionDeclaration() }.map { visitFunctionDeclaration(it) }
         val functionDefinitions = externalDeclarations.mapNotNull { it.functionDefinition() }.map { visitFunctionDefinition(it) }
 
-        return AstModule(moduleName, functionDeclarations, functionDefinitions, structs, listOf(), source)
+        return AstModule(moduleName, functionDeclarations, functionDefinitions, structs, listOf(), source, mutableListOf())
     }
 
     override fun visitFunctionDeclaration(ctx: LangParser.FunctionDeclarationContext): AstFunctionDeclaration {

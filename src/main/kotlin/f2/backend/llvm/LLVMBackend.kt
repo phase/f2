@@ -74,12 +74,12 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
 
         if (file != null) {
             // Print out LLVM IR
-//            error = BytePointer(null as Pointer?)
-//            LLVMPrintModuleToFile(llvmModule, file.path, error)
-//            LLVMDisposeMessage(error)
+            error = BytePointer(null as Pointer?)
+            LLVMPrintModuleToFile(llvmModule, file.path, error)
+            LLVMDisposeMessage(error)
         }
 
-        LLVMDumpModule(llvmModule)
+//        LLVMDumpModule(llvmModule)
 
         LLVMDisposeBuilder(builder)
         LLVMContextDispose(context)

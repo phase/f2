@@ -1,0 +1,30 @@
+struct X {
+  a : Int32
+}
+struct Y {
+  x : X
+}
+
+internal_add_i32 :: Int32 -> Int32 -> Int32 +External
+
+add :: Int32 -> Int32 -> Int32
+add x y = internal_add_i32(x, y).
+
+f :: X -> Int32
+f x = x.a.
+
+g :: Int32 -> X
+g a = X{a}.
+
+h :: Int32 -> Int32
+h a = let x = X{a},
+      x.a.
+
+i :: Int32 -> Y
+i a = Y{X{a}}.
+
+j :: Int32 -> Int32
+j a = let x = X{a},
+      let y = Y{x},
+      let w = y.x,
+      w.a.

@@ -2,7 +2,7 @@ group 'xyz.jadonfowler'
 version '0.0.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '1.1.3'
+    ext.kotlin_version = '1.2.0'
 
     repositories {
         mavenCentral()
@@ -16,7 +16,7 @@ apply plugin: 'kotlin'
 apply plugin: "antlr"
 apply plugin: "application"
 
-mainClassName = "f2.TestKt"
+mainClassName = "f2.MainKt"
 
 repositories {
     mavenCentral()
@@ -34,6 +34,12 @@ dependencies {
     compile "org.bytedeco:javacpp:1.3"
     compile "org.bytedeco.javacpp-presets:llvm:3.9.0-1.3"
     compile "org.bytedeco.javacpp-presets:llvm:3.9.0-1.3:linux-x86_64"
+
+    testRuntime "org.junit.platform:junit-platform-launcher:1.0.2"
+    testRuntime "org.junit.vintage:junit-vintage-engine:4.12.2"
+    testCompile "org.junit.jupiter:junit-jupiter-api:5.0.2"
+    testRuntime "org.junit.jupiter:junit-jupiter-engine:5.0.2"
+    testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
 }
 
 compileKotlin {

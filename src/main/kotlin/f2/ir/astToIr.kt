@@ -35,7 +35,7 @@ fun convert(astModule: AstModule): IrModule {
         }
     }
 
-    return IrModule(astModule.name, irExternalFunctions, irFunctions, irStructs, astModule.source)
+    return IrModule(astModule.name, irExternalFunctions, irFunctions, irStructs, astModule.source, astModule.errors)
 }
 
 fun convert(

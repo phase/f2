@@ -10,7 +10,8 @@ data class AstModule(
         val functionDefinitions: List<AstFunctionDefinition>,
         val structs: List<AstStruct>,
         val traits: List<AstTrait>,
-        val source: String
+        val source: String,
+        val errors: MutableList<String>
 ) {
     fun getType(name: String, localVariables: Map<String, Type>): Type {
         if (localVariables.containsKey(name)) return localVariables[name]!!
