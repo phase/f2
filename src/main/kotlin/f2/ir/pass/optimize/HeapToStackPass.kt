@@ -21,7 +21,7 @@ class HeapToStackPass(irModule: IrModule) : Pass(irModule) {
         // "seen" means the allocation goes above the function
         // "going above the function" means is returned
 
-        var lastValue: Pair<Int, ValueInstruction>? = null
+        var lastValue: Pair<Int/*index in ins*/, ValueInstruction>? = null
         val heapInstructionLocation: MutableMap<Int/*reg*/, Int/*index in ins*/> = mutableMapOf()
         val allocationsNotSeen = mutableListOf<Int/*reg*/>()
         val structReliance = mutableMapOf<Int/*reg*/, MutableList<Int/*reg*/>>()

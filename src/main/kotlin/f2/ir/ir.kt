@@ -16,25 +16,43 @@ data class IrModule(
     fun error(debugInfo: DebugInfo, message: String) {
         errors.add(reportError(source, debugInfo, message))
     }
+
+    fun getFunction(name: String): IrExternalFunction? {
+        val functionsWithName = externalFunctions.filter { it.name == name }.toMutableList()
+        functionsWithName.addAll(functions.filter { it.name == name })
+
+        return functionsWithName.lastOrNull()
+    }
 }
 
-data class IrExternalFunction(
+open class IrExternalFunction(
         val name: String,
         val returnType: Type,
         val arguments: List<Type>,
         val permissions: List<Permission>,
         val debugInfo: DebugInfo
-)
+) {
+    override fun toString(): String {
+        return "fun $name(${arguments.mapIndexed { i, t -> "%$i : $t" }.joinToString(",")})" +
+                " : $returnType (${permissions.joinToString(" ")})"
+    }
+}
 
-data class IrFunction(
-        val name: String,
-        val returnType: Type,
-        val permissions: List<Permission>,
+class IrFunction(
+        name: String,
+        returnType: Type,
+        permissions: List<Permission>,
         val argumentCount: Int,
         val registerTypes: List<Type>,
         val instructions: List<Instruction>,
-        val debugInfo: DebugInfo
-)
+        debugInfo: DebugInfo
+) : IrExternalFunction(name, returnType, registerTypes.subList(0, argumentCount), permissions, debugInfo) {
+    override fun toString(): String {
+        return "fun $name(${arguments.mapIndexed { i, t -> "%$i : $t" }.joinToString(",")})" +
+                " : $returnType (${permissions.joinToString(" ")})\n" +
+                instructions.map { "    $it" }.joinToString("\n") + "\n\n"
+    }
+}
 
 class IrStruct(
         name: String,
