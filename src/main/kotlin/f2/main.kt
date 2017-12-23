@@ -6,6 +6,7 @@ import f2.backend.Backend
 import f2.backend.llvm.LLVMBackend
 import f2.ir.IrModule
 import f2.ir.convert
+import f2.ir.pass.optimize.FreePass
 import f2.ir.pass.optimize.HeapToStackPass
 import f2.ir.pass.semantics.MemoryValidatorPass
 import f2.parser.LangLexer
@@ -65,6 +66,7 @@ fun astToIr(astModule: AstModule): IrModule {
 
     val passes: List<(IrModule) -> IrModule> = listOf(
             { i -> HeapToStackPass(i).optimize() },
+            { i -> FreePass(i).optimize() },
             { i -> MemoryValidatorPass(i).optimize() }
     )
     passes.forEach { ir = it(ir) }

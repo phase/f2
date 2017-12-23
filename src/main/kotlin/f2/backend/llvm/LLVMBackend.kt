@@ -173,6 +173,19 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
                     val bitCast = LLVMBuildBitCast(builder, mem, type, "")
                     valueStack.push(bitCast)
                 }
+                is FreeAllocationInstruction -> {
+                    val struct = registerValueRefs[i.register]!!
+                    val bitPointer = LLVMBuildBitCast(
+                            builder,
+                            struct,
+                            LLVMPointerType(LLVMInt8TypeInContext(context), 0),
+                            "")
+                    LLVMBuildCall(
+                            builder,
+                            free,
+                            PointerPointer<LLVMValueRef>(*arrayOf(bitPointer)),
+                            1, "")
+                }
             }
         }
 

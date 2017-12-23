@@ -84,3 +84,8 @@ data class StackAllocateInstruction(
         val debugInfo: DebugInfo,
         val type: IrStruct
 ) : ValueInstruction
+
+data class FreeAllocationInstruction(
+        val debugInfo: DebugInfo,
+        val register: Int
+) : VoidInstruction

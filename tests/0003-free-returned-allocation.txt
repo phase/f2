@@ -1,0 +1,10 @@
+struct X {
+  a : Int32
+}
+
+box :: Int32 -> X
+box a = X{a}.
+
+f :: Int32 -> Int32
+f a = let x = box(a),
+      a.
