@@ -28,13 +28,15 @@ object LLVMTest {
             val id = it.id.toString().padStart(4, '0')
             val paddedName = "#$BLUE_COLOR$id$RESET_COLOR \"${it.name}\"".padEnd(63, '.')
             val outputFiles = getOutputFiles(it.id)
-            val llvmOut = outputFiles.filter { it.extension == "ll" }.firstOrNull()
+            val llvmOut = outputFiles.find { it.extension == "ll" }
 
             if (llvmOut != null) {
                 DynamicTest.dynamicTest(it.name) {
                     val expectedOutput = llvmOut.readText().removeSuffix("\n")
+                    val timer = System.nanoTime()
                     val ir = compile(it.name, it.source)
                     val errors = ir.errors.joinToString("\n")
+
                     assertTrue(ir.errors.size == 0,
                             "$paddedName.${RED_COLOR}FAILED$RESET_COLOR\n\n" +
                                     "Expected 0 errors.\n\n" +
@@ -42,13 +44,16 @@ object LLVMTest {
                                     "$errors\n\n")
 
                     val actualOutput = compileLLVM(ir).removeSuffix("\n")
+                    val time = ((System.nanoTime() - timer).toDouble()) / 1000000000.0
+
                     assertTrue(actualOutput.contains(expectedOutput),
                             "$paddedName.${RED_COLOR}FAILED$RESET_COLOR\n\n" +
                                     "Expected:\n\n" +
                                     "$expectedOutput\n\n" +
                                     "Actual:\n\n" +
                                     "$actualOutput\n\n")
-                    println("$paddedName.${GREEN_COLOR}ok$RESET_COLOR")
+
+                    println("$paddedName.${GREEN_COLOR}ok$RESET_COLOR ${time}s")
                 }
 
             } else null
