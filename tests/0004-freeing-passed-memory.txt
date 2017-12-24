@@ -1,0 +1,24 @@
+struct X {
+  a : Int32
+}
+
+internal_add_i32 :: Int32 -> Int32 -> Int32 +External
+
+box :: Int32 -> X
+box a = X{a}.
+
+firstThing :: X -> Int32
+firstThing x = x.a.
+
+secondThing :: X -> Int32
+secondThing x = x.a.
+
+thirdThing :: X -> Int32
+thirdThing x = x.a.
+
+f :: Int32 -> Int32
+f i = let x = box(i),
+      let a = firstThing(x),
+      let b = secondThing(x),
+      let c = thirdThing(x),
+      internal_add_i32(a, internal_add_i32(b, c)).

@@ -109,7 +109,7 @@ fun convert(
                         registers[regIndex] = argInFunType
                     }
                 }
-                astModule.getType(exp.functionName, mapOf())
+                astModule.getType(exp.functionName, mapOf()).toIrType()
             }
             is FieldGetterExpression -> {
                 val irStruct = variables[exp.structName]!! as IrStruct
