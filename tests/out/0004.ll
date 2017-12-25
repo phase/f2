@@ -52,3 +52,9 @@ entry:
   %7 = call i32 @internal_add_i32(i32 %2, i32 %6)
   ret i32 %7
 }
+
+define %X* @g(i32) {
+entry:
+  %1 = call %X* @box(i32 %0)
+  ret %X* %1
+}

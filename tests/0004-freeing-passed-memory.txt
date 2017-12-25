@@ -22,3 +22,7 @@ f i = let x = box(i),
       let b = secondThing(x),
       let c = thirdThing(x),
       internal_add_i32(a, internal_add_i32(b, c)).
+
+g :: Int32 -> X
+g i = let x = box(i),
+      x.

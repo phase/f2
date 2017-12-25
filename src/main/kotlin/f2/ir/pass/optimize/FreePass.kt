@@ -1,6 +1,5 @@
 package f2.ir.pass.optimize
 
-import f2.ast.DebugInfo
 import f2.ir.*
 import f2.ir.pass.Pass
 import f2.type.Type
@@ -53,6 +52,14 @@ class FreePass(irModule: IrModule) : Pass(irModule) {
                     val v = functionCallsThatReturnAllocations.pop()
                     allocationsFromBelow.put(instruction.register, v.first)
                     lastPlaceAllocationWasUsed.put(instruction.register, index)
+                }
+            }
+
+            // If the struct is returned, don't free it
+            if(instruction is ReturnInstruction) {
+                val r = instruction.registerIndex
+                if(allocationsFromBelow.contains(r)) {
+                    lastPlaceAllocationWasUsed.remove(r)
                 }
             }
         }
