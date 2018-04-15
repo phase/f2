@@ -1,50 +1,50 @@
 package f2.ast
 
 interface Expression {
-    fun debugInfo() : DebugInfo
+    val debugInfo: DebugInfo
 }
 
 data class IdentifierExpression(
-        val debugInfo: DebugInfo,
+        override val debugInfo: DebugInfo,
         val name: String
-) : Expression { override fun debugInfo(): DebugInfo = debugInfo }
+) : Expression
 
 data class FunctionCallExpression(
-        val debugInfo: DebugInfo,
+        override val debugInfo: DebugInfo,
         val functionName: String,
         val arguments: List<Expression>
-) : Expression { override fun debugInfo(): DebugInfo = debugInfo }
+) : Expression
 
 data class FieldGetterExpression(
-        val debugInfo: DebugInfo,
+        override val debugInfo: DebugInfo,
         val structName: String,
         val fieldName: String
-) : Expression { override fun debugInfo(): DebugInfo = debugInfo }
+) : Expression
 
 data class AllocateStructExpression(
-        val debugInfo: DebugInfo,
+        override val debugInfo: DebugInfo,
         val struct: String,
         val expressions: List<Expression>
-) : Expression { override fun debugInfo(): DebugInfo = debugInfo }
+) : Expression
 
 interface Statement {
-    fun debugInfo() : DebugInfo
+    val debugInfo: DebugInfo
 }
 
 data class VariableAssignmentStatement(
-        val debugInfo: DebugInfo,
+        override val debugInfo: DebugInfo,
         val name: String,
         val expression: Expression
-) : Statement { override fun debugInfo(): DebugInfo = debugInfo }
+) : Statement
 
 data class ReturnStatement(
-        val debugInfo: DebugInfo,
+        override val debugInfo: DebugInfo,
         val expression: Expression
-) : Statement { override fun debugInfo(): DebugInfo = debugInfo }
+) : Statement
 
 data class FieldSetterStatement(
-        val debugInfo: DebugInfo,
+        override val debugInfo: DebugInfo,
         val structName: String,
         val fieldName: String,
         val expression: Expression
-) : Statement { override fun debugInfo(): DebugInfo = debugInfo }
+) : Statement

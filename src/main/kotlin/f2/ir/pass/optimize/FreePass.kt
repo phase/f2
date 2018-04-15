@@ -65,7 +65,7 @@ class FreePass(irModule: IrModule) : Pass(irModule) {
         }
 
         lastPlaceAllocationWasUsed.forEach { register, index ->
-            val free = FreeAllocationInstruction(ins[index].debugInfo(), register)
+            val free = FreeAllocationInstruction(ins[index].debugInfo, register)
             val newInstructions = ins.toList().subList(0, index + 1).toMutableList()
             newInstructions.add(free)
             newInstructions.addAll(ins.subList(index + 1, ins.size))

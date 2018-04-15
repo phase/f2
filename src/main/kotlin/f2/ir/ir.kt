@@ -61,52 +61,52 @@ class IrStruct(
 ) : Type(name)
 
 interface Instruction {
-    fun debugInfo(): DebugInfo
+    val debugInfo: DebugInfo
 }
 
 interface ValueInstruction : Instruction // Produces a value
 interface VoidInstruction : Instruction // Doesn't produce a value
 
 data class StoreInstruction(
-        val debugInfo: DebugInfo,
+        override val debugInfo: DebugInfo,
         val register: Int
-) : VoidInstruction { override fun debugInfo(): DebugInfo = debugInfo }
+) : VoidInstruction
 
 data class FunctionCallInstruction(
-        val debugInfo: DebugInfo,
+        override val debugInfo: DebugInfo,
         val functionName: String,
         val registerIndexes: List<Int>
-) : ValueInstruction { override fun debugInfo(): DebugInfo = debugInfo }
+) : ValueInstruction
 
 data class ReturnInstruction(
-        val debugInfo: DebugInfo,
+        override val debugInfo: DebugInfo,
         val registerIndex: Int
-) : VoidInstruction { override fun debugInfo(): DebugInfo = debugInfo }
+) : VoidInstruction
 
 data class FieldGetInstruction(
-        val debugInfo: DebugInfo,
+        override val debugInfo: DebugInfo,
         val registerIndex: Int,
         val fieldIndex: Int
-) : ValueInstruction { override fun debugInfo(): DebugInfo = debugInfo }
+) : ValueInstruction
 
 data class FieldSetInstruction(
-        val debugInfo: DebugInfo,
+        override val debugInfo: DebugInfo,
         val structRegisterIndex: Int,
         val fieldIndex: Int,
         val valueRegisterIndex: Int
-) : VoidInstruction { override fun debugInfo(): DebugInfo = debugInfo }
+) : VoidInstruction
 
 data class HeapAllocateInstruction(
-        val debugInfo: DebugInfo,
+        override val debugInfo: DebugInfo,
         val type: IrStruct
-) : ValueInstruction { override fun debugInfo(): DebugInfo = debugInfo }
+) : ValueInstruction
 
 data class StackAllocateInstruction(
-        val debugInfo: DebugInfo,
+        override val debugInfo: DebugInfo,
         val type: IrStruct
-) : ValueInstruction { override fun debugInfo(): DebugInfo = debugInfo }
+) : ValueInstruction
 
 data class FreeAllocationInstruction(
-        val debugInfo: DebugInfo,
+        override val debugInfo: DebugInfo,
         val register: Int
-) : VoidInstruction { override fun debugInfo(): DebugInfo = debugInfo }
+) : VoidInstruction

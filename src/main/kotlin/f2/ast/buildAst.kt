@@ -66,10 +66,10 @@ class ASTBuilder(val moduleName: String, val source: String) : LangBaseVisitor<A
         // convert the final expression to statements
         val expression = visitExpression(ctx.expression())
         if (expression is IdentifierExpression) {
-            statements.add(ReturnStatement(expression.debugInfo(), expression))
+            statements.add(ReturnStatement(expression.debugInfo, expression))
         } else {
-            statements.add(VariableAssignmentStatement(expression.debugInfo(), "__return_expression", expression))
-            statements.add(ReturnStatement(expression.debugInfo(), IdentifierExpression(ctx.debugInfo(), "__return_expression")))
+            statements.add(VariableAssignmentStatement(expression.debugInfo, "__return_expression", expression))
+            statements.add(ReturnStatement(expression.debugInfo, IdentifierExpression(ctx.debugInfo(), "__return_expression")))
         }
 
         return AstFunctionDefinition(functionName, arguments, statements, ctx.debugInfo())

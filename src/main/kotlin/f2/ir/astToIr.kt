@@ -178,7 +178,7 @@ fun convert(
                             // if the expression is an identifier, that means there is already a register for it and
                             // we don't need to store it in another one
                             if (it !is IdentifierExpression) {
-                                instructions.add(StoreInstruction(it.debugInfo(), i))
+                                instructions.add(StoreInstruction(it.debugInfo, i))
                             }
                             i
                         }
@@ -217,7 +217,7 @@ fun convert(
                     // generate the field expressions and set them in the allocation
                     val setFieldInstructions = exp.expressions.mapIndexed { i, e ->
                         if (e is IdentifierExpression) idRegs++
-                        FieldSetInstruction(e.debugInfo(), structIndex, i, expressionRegisters[i])
+                        FieldSetInstruction(e.debugInfo, structIndex, i, expressionRegisters[i])
                     }
                     instructions.addAll(setFieldInstructions)
                     registerIndex += setFieldInstructions.size - idRegs
