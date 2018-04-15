@@ -1,5 +1,7 @@
 package f2.ast
 
+import f2.type.Type
+
 interface Expression {
     val debugInfo: DebugInfo
 }
@@ -9,9 +11,15 @@ data class IdentifierExpression(
         val name: String
 ) : Expression
 
+data class TypeExpression(
+        override val debugInfo: DebugInfo,
+        val type: Type
+) : Expression
+
 data class FunctionCallExpression(
         override val debugInfo: DebugInfo,
         val functionName: String,
+        val typeParameters: List<TypeExpression> = listOf(),
         val arguments: List<Expression>
 ) : Expression
 
@@ -26,6 +34,8 @@ data class AllocateStructExpression(
         val struct: String,
         val expressions: List<Expression>
 ) : Expression
+
+/* ========================================= */
 
 interface Statement {
     val debugInfo: DebugInfo

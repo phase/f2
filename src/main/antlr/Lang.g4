@@ -10,7 +10,9 @@ externalDeclaration
     | structDeclaration
     ;
 
-type: ID; // TODO Generics
+type
+    : ID
+    | GID;
 
 structDeclaration
     : 'struct' ID '{' field (',' field)* '}'
@@ -52,8 +54,10 @@ expression
     ;
 
 functionCall
-    : ID '(' arguments ')'
+    : ID typeParameters? '(' arguments ')'
     ;
+
+typeParameters: '[' type (',' type)* ']';
 
 fieldGetter
     : ID '.' ID
@@ -86,7 +90,6 @@ fragment EXP: ('E' | 'e') ('+' | '-')? INT;
 
 STRING
     : '"' ( ESC | ~[\\"] )*? '"'
-    | '\'' ( ESC | ~[\\'] )*? '\''
     ;
 
 fragment ESC
@@ -110,6 +113,7 @@ fragment HEX_ESCAPE
 
 PERMISSION: '+' LETTER+;
 ID: LETTER (LETTER|DIGIT|'_')*;
+GID: [\\'] LETTER (LETTER|'_')*;
 fragment LETTER: [a-zA-Z];
 
 WS: [ \r\n\t\u000C]+ -> skip;

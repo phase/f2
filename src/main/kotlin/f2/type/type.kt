@@ -6,6 +6,8 @@ open class Type(val name: String) {
 
 val UndefinedType = Type("Undefined")
 
+data class GenericType(val internalName: String) : Type("'$internalName")
+
 open class PrimitiveType(name: String) : Type(name)
 
 val primitives = listOf(

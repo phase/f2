@@ -1,0 +1,5 @@
+f :: 'a -> 'b -> 'a
+f a b = a.
+
+g :: Int32 -> Int32 -> Int32
+g a b = f[Int32, Int32](a, b).
