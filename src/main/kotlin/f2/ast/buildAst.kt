@@ -5,6 +5,7 @@ import f2.parser.LangParser
 import f2.permission.Permission
 import f2.permission.UndefinedPermission
 import f2.permission.permissions
+import f2.type.GenericType
 import f2.type.Type
 import f2.type.UndefinedType
 import f2.type.primitives
@@ -32,8 +33,8 @@ class ASTBuilder(val moduleName: String, val source: String) : LangBaseVisitor<A
         return UndefinedPermission
     }
 
-    fun LangParser.TypeContext.toType(): Type = getType(text)
-    fun List<LangParser.TypeContext>.toType(): List<Type> = map { getType(it.text) }
+    fun LangParser.TypeContext.toType(): Type = visitType(this).type
+    fun List<LangParser.TypeContext>.toType(): List<Type> = map { visitType(it).type }
     fun TerminalNode.string(): String = this.symbol.text
 
     override fun visitModule(ctx: LangParser.ModuleContext): AstModule {
@@ -122,10 +123,28 @@ class ASTBuilder(val moduleName: String, val source: String) : LangBaseVisitor<A
         }
         ctx.functionCall()?.let {
             val functionName = it.ID().string()
+            val typeParameters = it.typeParameters()?.let {
+                it.type().map {
+                    visitType(it)
+                }
+            } ?: listOf()
             val arguments = it.arguments().expression().map { visitExpression(it) }
-            return FunctionCallExpression(ctx.debugInfo(), functionName, arguments)
+            return FunctionCallExpression(ctx.debugInfo(), functionName, typeParameters, arguments)
         }
         throw IllegalStateException("$ctx not an expression?")
+    }
+
+    override fun visitType(ctx: LangParser.TypeContext): TypeExpression {
+        return TypeExpression(ctx.debugInfo(),
+                ctx.ID()?.let {
+                    val s = it.string()
+                    getType(s)
+                } ?: ctx.GID()?.let {
+                    // remove '
+                    val s = it.string().substring(1)
+                    GenericType(s)
+                } ?: throw Exception("Can't find type $ctx")
+        )
     }
 
 }

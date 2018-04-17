@@ -109,7 +109,7 @@ fun convert(
                         registers[regIndex] = argInFunType
                     }
                 }
-                astModule.getType(exp.functionName, mapOf()).toIrType()
+                astModule.getReturnTypeOfFunctionCall(exp.functionName, exp.typeParameters.map { it.type }).toIrType()
             }
             is FieldGetterExpression -> {
                 val irStruct = variables[exp.structName]!! as IrStruct
@@ -170,19 +170,29 @@ fun convert(
     fun generateExpression(exp: Expression): Int {
         return when (exp) {
             is FunctionCallExpression -> {
-                instructions.add(FunctionCallInstruction(
-                        exp.debugInfo,
-                        exp.functionName,
-                        exp.arguments.map {
-                            val i = generateExpression(it)
-                            // if the expression is an identifier, that means there is already a register for it and
-                            // we don't need to store it in another one
-                            if (it !is IdentifierExpression) {
-                                instructions.add(StoreInstruction(it.debugInfo, i))
-                            }
-                            i
-                        }
-                ))
+                val arguments = exp.arguments.map {
+                    val i = generateExpression(it)
+                    // if the expression is an identifier, that means there is already a register for it and
+                    // we don't need to store it in another one
+                    if (it !is IdentifierExpression) {
+                        instructions.add(StoreInstruction(it.debugInfo, i))
+                    }
+                    i
+                }
+                if (exp.typeParameters.isEmpty()) {
+                    instructions.add(FunctionCallInstruction(
+                            exp.debugInfo,
+                            exp.functionName,
+                            arguments
+                    ))
+                } else {
+                    instructions.add(GenericFunctionCallInstruction(
+                            exp.debugInfo,
+                            exp.functionName,
+                            exp.typeParameters,
+                            arguments
+                    ))
+                }
                 registerIndex++ + argCount
             }
             is IdentifierExpression -> {

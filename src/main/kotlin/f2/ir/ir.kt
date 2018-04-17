@@ -1,6 +1,7 @@
 package f2.ir
 
 import f2.ast.DebugInfo
+import f2.ast.TypeExpression
 import f2.ast.reportError
 import f2.permission.Permission
 import f2.type.Type
@@ -75,6 +76,13 @@ data class StoreInstruction(
 data class FunctionCallInstruction(
         override val debugInfo: DebugInfo,
         val functionName: String,
+        val registerIndexes: List<Int>
+) : ValueInstruction
+
+data class GenericFunctionCallInstruction(
+        override val debugInfo: DebugInfo,
+        val functionName: String,
+        val typeParameters: List<TypeExpression>,
         val registerIndexes: List<Int>
 ) : ValueInstruction
 

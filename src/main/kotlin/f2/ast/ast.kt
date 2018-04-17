@@ -1,6 +1,7 @@
 package f2.ast
 
 import f2.permission.Permission
+import f2.type.GenericType
 import f2.type.Type
 import f2.type.UndefinedType
 
@@ -25,6 +26,19 @@ data class AstModule(
     fun getArgumentType(functionName: String, index: Int): Type {
         val functions = functionDeclarations.filter { it.name == functionName }
         if (functions.isNotEmpty()) return functions[0].argumentTypes[index]
+
+        return UndefinedType
+    }
+
+    fun getReturnTypeOfFunctionCall(functionName: String, typeParameters: List<Type>): Type {
+        val functions = functionDeclarations.filter { it.name == functionName }
+        if (functions.isNotEmpty()) {
+            val function = functions[0]
+            return if (function.returnType is GenericType) {
+                val index = function.argumentTypes.filter { it is GenericType }.indexOf(function.returnType)
+                typeParameters[index]
+            } else function.returnType
+        }
 
         return UndefinedType
     }
