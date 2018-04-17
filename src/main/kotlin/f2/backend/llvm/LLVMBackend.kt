@@ -17,7 +17,7 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
     val context: LLVMContextRef
     val builder: LLVMBuilderRef
 
-    val functions = mutableMapOf<String, LLVMValueRef>()
+    val functions = mutableMapOf<IrFunctionHeader, LLVMValueRef>()
     val structTypes = mutableMapOf<String, LLVMTypeRef>()
 
     // TODO: Move to stdlib
@@ -32,7 +32,7 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
         LLVMInitializeNativeTarget()
 
         context = LLVMContextCreate()
-        llvmModule = LLVMModuleCreateWithNameInContext(irModule.name, context)
+        llvmModule = LLVMModuleCreateWithNameInContext(irModule.name.joinToString("."), context)
         builder = LLVMCreateBuilder()
 
         val targetTriple = LLVMGetDefaultTargetTriple()
@@ -87,8 +87,8 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
     }
 
     fun generate() {
-        irModule.externalFunctions.forEach { generate(it) }
-        irModule.functions.forEach { generate(it) }
+        irModule.functions.filterIsInstance<IrExternalFunction>().forEach { generate(it) }
+        irModule.functions.filterIsInstance<IrFunction>().forEach { generate(it) }
     }
 
     fun generate(irExternalFunction: IrExternalFunction) {
@@ -102,7 +102,7 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
         )
         val function: LLVMValueRef = LLVMAddFunction(llvmModule, irExternalFunction.name, functionType)
         LLVMSetFunctionCallConv(function, LLVMCCallConv)
-        functions.put(irExternalFunction.name, function)
+        functions.put(irExternalFunction, function)
     }
 
     fun generate(irFunction: IrFunction) {
@@ -117,7 +117,7 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
         )
         val function: LLVMValueRef = LLVMAddFunction(llvmModule, irFunction.name, functionType)
         LLVMSetFunctionCallConv(function, LLVMCCallConv)
-        functions.put(irFunction.name, function)
+        functions.put(irFunction, function)
 
         val entryBlock = LLVMAppendBasicBlock(function, "entry")
         LLVMPositionBuilderAtEnd(builder, entryBlock)
@@ -135,9 +135,30 @@ class LLVMBackend(irModule: IrModule) : Backend(irModule) {
                     registerValueRefs.put(i.register, valueStack.pop())
                 }
                 is FunctionCallInstruction -> {
-                    val f = functions[i.functionName]!!
+                    val f = functions[i.function]
                     val arguments = i.registerIndexes.map { registerValueRefs[it]!! }
-                    val call = LLVMBuildCall(builder, f, PointerPointer(*arguments.toTypedArray()), arguments.size, "")
+                    val call = if (f != null) {
+                        LLVMBuildCall(builder, f, PointerPointer(*arguments.toTypedArray()), arguments.size, "")
+                    } else {
+                        // the function being called is imported from another module,
+                        // so we want to declare it as external and make an llvm function call
+                        // to the external function
+                        val externalIrFunction = i.function
+                        val externalReturnType = getLLVMType(externalIrFunction.returnType)
+                        val externalArgumentTypes = externalIrFunction.arguments.map { getLLVMType(it) }
+                        val externalFunctionType = LLVMFunctionType(
+                                externalReturnType,
+                                PointerPointer<LLVMTypeRef>(*externalArgumentTypes.toTypedArray()),
+                                externalArgumentTypes.size,
+                                0
+                        )
+                        val externalFunction: LLVMValueRef = LLVMAddFunction(llvmModule, externalIrFunction.name, externalFunctionType)
+                        LLVMSetFunctionCallConv(externalFunction, LLVMCCallConv)
+                        functions.put(externalIrFunction, externalFunction)
+
+                        // now that we have created the function, call it
+                        LLVMBuildCall(builder, externalFunction, PointerPointer(*arguments.toTypedArray()), arguments.size, "")
+                    }
                     valueStack.push(call)
                 }
                 is ReturnInstruction -> {

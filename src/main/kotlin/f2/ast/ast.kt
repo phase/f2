@@ -4,13 +4,16 @@ import f2.permission.Permission
 import f2.type.Type
 import f2.type.UndefinedType
 
+typealias ImportPath = List<String>
+
 data class AstModule(
-        val name: String,
+        val name: List<String>,
         val functionDeclarations: List<AstFunctionDeclaration>,
         val functionDefinitions: List<AstFunctionDefinition>,
         val structs: List<AstStruct>,
         val traits: List<AstTrait>,
         val source: String,
+        val imports: List<ImportPath>,
         val errors: MutableList<String>
 ) {
     fun getType(name: String, localVariables: Map<String, Type>): Type {

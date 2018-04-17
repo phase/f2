@@ -2,7 +2,9 @@ grammar Lang;
 
 // Parsing
 
-module: externalDeclaration* EOF;
+module: imports* externalDeclaration* EOF;
+
+imports: 'import' ID ('.' ID)*;
 
 externalDeclaration
     : functionDeclaration

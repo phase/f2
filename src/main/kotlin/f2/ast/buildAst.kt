@@ -10,7 +10,7 @@ import f2.type.UndefinedType
 import f2.type.primitives
 import org.antlr.v4.runtime.tree.TerminalNode
 
-class ASTBuilder(val moduleName: String, val source: String) : LangBaseVisitor<Any>() {
+class ASTBuilder(val moduleName: List<String>, val source: String) : LangBaseVisitor<Any>() {
 
     val structs: MutableList<AstStruct> = mutableListOf()
 
@@ -43,7 +43,9 @@ class ASTBuilder(val moduleName: String, val source: String) : LangBaseVisitor<A
         val functionDeclarations = externalDeclarations.mapNotNull { it.functionDeclaration() }.map { visitFunctionDeclaration(it) }
         val functionDefinitions = externalDeclarations.mapNotNull { it.functionDefinition() }.map { visitFunctionDefinition(it) }
 
-        return AstModule(moduleName, functionDeclarations, functionDefinitions, structs, listOf(), source, mutableListOf())
+        val imports = ctx.imports().map { it.ID().map { it.string() } }
+
+        return AstModule(moduleName, functionDeclarations, functionDefinitions, structs, listOf(), source, imports, mutableListOf())
     }
 
     override fun visitFunctionDeclaration(ctx: LangParser.FunctionDeclarationContext): AstFunctionDeclaration {

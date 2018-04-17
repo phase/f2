@@ -1,0 +1,4 @@
+import b
+
+g :: Int32 -> Int32
+g a = f(a).

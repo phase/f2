@@ -29,9 +29,7 @@ class FreePass(irModule: IrModule) : Pass(irModule) {
                     }
                 }
 
-                // Assume the function isn't null
-                // TODO: Add pass that finds these and reports error
-                val functionCalled = irModule.getFunction(instruction.functionName)!!
+                val functionCalled = instruction.function
                 if (functionCalled.returnType is IrStruct) {
                     // the function call returned a heap allocation that needs to be freed
                     functionCallsThatReturnAllocations.push(Pair(index, instruction))

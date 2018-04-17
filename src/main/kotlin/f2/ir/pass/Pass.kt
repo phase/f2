@@ -1,16 +1,16 @@
 package f2.ir.pass
 
+import f2.ir.*
 import f2.type.Type
-import f2.ir.Instruction
-import f2.ir.IrFunction
-import f2.ir.IrModule
 
 abstract class Pass(val irModule: IrModule) {
 
     fun optimize(): IrModule {
-        val functions = irModule.functions.map { optimize(it) }
-        return IrModule(irModule.name, irModule.externalFunctions, functions, irModule.structs,
-                irModule.source, irModule.errors)
+        // replace functions in IrModule with optimized versions
+        val optimizedFunctions = irModule.functions.filterIsInstance<IrFunction>().map { optimize(it) }
+        val functions: MutableList<IrFunctionHeader> = irModule.functions.filterIsInstance<IrExternalFunction>().toMutableList()
+        functions.addAll(optimizedFunctions)
+        return IrModule(irModule.name, irModule.structs, functions, irModule.imports, irModule.source, irModule.errors)
     }
 
     fun optimize(irFunction: IrFunction): IrFunction {

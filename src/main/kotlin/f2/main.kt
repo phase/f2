@@ -57,19 +57,23 @@ fun stringToAst(moduleName: String, code: String): AstModule {
     val tokens = CommonTokenStream(lexer)
     val parser = LangParser(tokens)
     val result = parser.module()
-    val astBuilder = ASTBuilder(moduleName, code)
+    val astBuilder = ASTBuilder(listOf(moduleName), code)
     return astBuilder.visitModule(result)
 }
 
 fun astToIr(astModule: AstModule): IrModule {
-    var ir = convert(astModule)
+    return astToIr(listOf(astModule)).first()
+}
+
+fun astToIr(astModules: List<AstModule>): List<IrModule> {
+    var ir = convert(astModules)
 
     val passes: List<(IrModule) -> IrModule> = listOf(
             { i -> HeapToStackPass(i).optimize() },
             { i -> FreePass(i).optimize() },
             { i -> MemoryValidatorPass(i).optimize() }
     )
-    passes.forEach { ir = it(ir) }
+    passes.forEach { ir = ir.map(it) }
 
     return ir
 }

@@ -1,37 +1,88 @@
 package f2.ir
 
 import f2.ast.DebugInfo
+import f2.ast.ImportPath
 import f2.ast.reportError
 import f2.permission.Permission
 import f2.type.Type
+import java.util.*
 
-data class IrModule(
-        val name: String,
-        val externalFunctions: List<IrExternalFunction>,
-        val functions: List<IrFunction>,
+open class IrModuleHeader(
+        val name: List<String>,
         val structs: List<IrStruct>,
+        val functions: MutableList<IrFunctionHeader>,
+        val imports: List<ImportPath>
+) {
+
+    override fun toString(): String {
+        // Don't ask.
+        return "module ${name.joinToString(".")}\n${imports.joinToString("\n") { it.joinToString(".") }}\n" +
+                "${structs.joinToString("\n") { it.toString() }}\n\n${functions.joinToString("\n\n") { it.toString() }}\n"
+    }
+}
+
+class IrModule(
+        name: List<String>,
+        structs: List<IrStruct>,
+        functions: MutableList<IrFunctionHeader>,
+        imports: List<ImportPath>,
         val source: String,
         val errors: MutableList<String>
-) {
+) : IrModuleHeader(name, structs, functions, imports) {
     fun error(debugInfo: DebugInfo, message: String) {
         errors.add(reportError(source, debugInfo, message))
     }
 
-    fun getFunction(name: String): IrExternalFunction? {
-        val functionsWithName = externalFunctions.filter { it.name == name }.toMutableList()
-        functionsWithName.addAll(functions.filter { it.name == name })
-
-        return functionsWithName.lastOrNull()
+    fun getFunction(name: String, knownModules: List<IrModuleHeader>): IrFunctionHeader? {
+        val function = functions.find { it.name == name }
+        if (function != null) {
+            return function
+        } else {
+            knownModules.forEach {
+                val externalFunction = it.functions.find { it.name == name }
+                if (externalFunction != null) return externalFunction
+            }
+        }
+        return null
     }
 }
 
-open class IrExternalFunction(
+open class IrFunctionHeader(
         val name: String,
         val returnType: Type,
         val arguments: List<Type>,
         val permissions: List<Permission>,
         val debugInfo: DebugInfo
 ) {
+    lateinit var parent: IrModuleHeader
+
+    override fun toString(): String {
+        return "fun $name(${arguments.mapIndexed { i, t -> "%$i : $t" }.joinToString(",")})" +
+                " : $returnType (${permissions.joinToString(" ")})"
+    }
+
+    // Used specifically in the LLVM Backend for checking imported functions
+    override fun equals(other: Any?): Boolean {
+        return other is IrFunctionHeader
+                && other.name == this.name
+                && other.arguments == this.arguments
+                && other.returnType == this.returnType
+                && other.permissions == this.permissions
+    }
+
+    override fun hashCode(): Int {
+        return Arrays.deepHashCode(arrayOf(name, returnType, *arguments.toTypedArray(), *permissions.toTypedArray()))
+    }
+
+}
+
+class IrExternalFunction(
+        name: String,
+        returnType: Type,
+        arguments: List<Type>,
+        permissions: List<Permission>,
+        debugInfo: DebugInfo
+) : IrFunctionHeader(name, returnType, arguments, permissions, debugInfo) {
     override fun toString(): String {
         return "fun $name(${arguments.mapIndexed { i, t -> "%$i : $t" }.joinToString(",")})" +
                 " : $returnType (${permissions.joinToString(" ")})"
@@ -46,11 +97,11 @@ class IrFunction(
         val registerTypes: List<Type>,
         val instructions: List<Instruction>,
         debugInfo: DebugInfo
-) : IrExternalFunction(name, returnType, registerTypes.subList(0, argumentCount), permissions, debugInfo) {
+) : IrFunctionHeader(name, returnType, registerTypes.subList(0, argumentCount), permissions, debugInfo) {
     override fun toString(): String {
         return "fun $name(${arguments.mapIndexed { i, t -> "%$i : $t" }.joinToString(",")})" +
                 " : $returnType (${permissions.joinToString(" ")})\n" +
-                instructions.map { "    $it" }.joinToString("\n") + "\n\n"
+                instructions.joinToString("\n") { "    $it" }
     }
 }
 
@@ -58,7 +109,17 @@ class IrStruct(
         name: String,
         val fields: List<Type>,
         val debugInfo: DebugInfo
-) : Type(name)
+) : Type(name) {
+
+//    override fun toString(): String = "struct $name { ${fields.joinToString(", ")} }"
+
+    override fun equals(other: Any?): Boolean {
+        return other is IrStruct
+                && other.name == this.name
+                && other.fields == this.fields
+    }
+
+}
 
 interface Instruction {
     val debugInfo: DebugInfo
@@ -74,7 +135,7 @@ data class StoreInstruction(
 
 data class FunctionCallInstruction(
         override val debugInfo: DebugInfo,
-        val functionName: String,
+        val function: IrFunctionHeader,
         val registerIndexes: List<Int>
 ) : ValueInstruction
 

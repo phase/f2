@@ -2,6 +2,14 @@ package f2.type
 
 open class Type(val name: String) {
     override fun toString(): String = name
+
+    override fun equals(other: Any?): Boolean {
+        return other is Type && other.name == this.name
+    }
+
+    override fun hashCode(): Int {
+        return name.hashCode()
+    }
 }
 
 val UndefinedType = Type("Undefined")

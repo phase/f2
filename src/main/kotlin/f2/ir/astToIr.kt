@@ -6,9 +6,53 @@ import f2.type.Type
 import f2.type.UndefinedType
 import f2.type.primitives
 
-fun convert(astModule: AstModule): IrModule {
+fun AstModule.externalFunctionDeclarations(): List<AstFunctionDeclaration> {
+    return this.functionDeclarations.filter {
+        val n = it.name
+        this.functionDefinitions.filter { it.name == n }.isEmpty()
+    }
+}
+
+fun AstModule.getIrStructs(): List<IrStruct> {
+    return this.structs.map { convert(it) }
+}
+
+fun AstModule.getIrHeader(): IrModuleHeader {
+    val irStructs = getIrStructs()
+    val externalFunctions: List<IrExternalFunction> = this.externalFunctionDeclarations().map { convert(it, irStructs) }
+
+    val functionHeaders = this.functionDeclarations.filter {
+        val n = it.name
+        this.functionDefinitions.filter { it.name == n }.isNotEmpty()
+    }.map {
+        IrFunctionHeader(it.name, convert(it.returnType), it.argumentTypes.map(::convert), it.permissions, it.debugInfo)
+    }.toMutableList()
+
+    functionHeaders.addAll(externalFunctions)
+
+    val module = IrModuleHeader(this.name, irStructs, functionHeaders, this.imports)
+    module.functions.forEach { it.parent = module }
+    return module
+}
+
+fun convert(astModule: AstModule): IrModule = convert(listOf(astModule)).first()
+
+fun convert(astModules: List<AstModule>): List<IrModule> {
+    val headers = astModules.map(AstModule::getIrHeader)
+
+    return astModules.map { mod ->
+        // the module is itself or is an import
+
+        val imports = mutableListOf(headers.find { mod.name == it.name }!!)
+        imports.addAll(headers.filter { !mod.imports.contains(it.name) })
+
+        convert(mod, imports)
+    }
+}
+
+internal fun convert(astModule: AstModule, imports: List<IrModuleHeader>): IrModule {
     val irStructs = astModule.structs.map {
-        convert(astModule, it)
+        convert(it)
     }
 
     val irFunctions = astModule.functionDefinitions.map {
@@ -20,13 +64,10 @@ fun convert(astModule: AstModule): IrModule {
                 AstFunctionDeclaration(defName, (0 until it.arguments.size).map { UndefinedType }, UndefinedType, listOf(), DebugInfo(-1, -1))
             }
         }
-        convert(astModule, dec, it, irStructs)
+        convert(astModule, dec, it, irStructs, imports)
     }
 
-    val declarationsWithoutDefinition = astModule.functionDeclarations.filter {
-        val decName = it.name
-        astModule.functionDefinitions.filter { it.name == decName }.isEmpty()
-    }
+    val declarationsWithoutDefinition = astModule.externalFunctionDeclarations()
 
     val irExternalFunctions = declarationsWithoutDefinition.map { convert(it, irStructs) }
     irExternalFunctions.forEach {
@@ -35,16 +76,28 @@ fun convert(astModule: AstModule): IrModule {
         }
     }
 
-    return IrModule(astModule.name, irExternalFunctions, irFunctions, irStructs, astModule.source, astModule.errors)
+    val functionHeaders = mutableListOf<IrFunctionHeader>()
+    functionHeaders.addAll(irExternalFunctions)
+    functionHeaders.addAll(irFunctions)
+
+    val module = IrModule(astModule.name, irStructs, functionHeaders, listOf(), astModule.source, astModule.errors)
+
+    // set function parents
+    module.functions.forEach { it.parent = module }
+
+    return module
+}
+
+fun convert(type: Type): Type {
+    return if (type is AstStruct) convert(type) else type
 }
 
 fun convert(
-        astModule: AstModule,
         astStruct: AstStruct
 ): IrStruct {
     return IrStruct(astStruct.name, astStruct.fields.map {
         if (it.type is AstStruct) {
-            convert(astModule, it.type)
+            convert(it.type)
         } else it.type
     }, astStruct.debugInfo)
 }
@@ -53,7 +106,7 @@ fun convert(
         astFunctionDeclaration: AstFunctionDeclaration,
         irStructs: List<IrStruct>
 ): IrExternalFunction {
-    val types: MutableList<Type> = irStructs.map { it as Type }.toMutableList()
+    val types: MutableList<Type> = irStructs.toMutableList()
     types.addAll(primitives)
     val irReturnType = types.find { it.name == astFunctionDeclaration.returnType.name }!!
     val argumentTypes = astFunctionDeclaration.argumentTypes.map {
@@ -68,7 +121,8 @@ fun convert(
         astModule: AstModule,
         astFunctionDeclaration: AstFunctionDeclaration,
         astFunctionDefinition: AstFunctionDefinition,
-        irStructs: List<IrStruct>
+        irStructs: List<IrStruct>,
+        imports: List<IrModuleHeader>
 ): IrFunction {
 
     fun AstStruct.toIrStruct(): IrStruct = irStructs.find { it.name == this.name }!!
@@ -170,9 +224,23 @@ fun convert(
     fun generateExpression(exp: Expression): Int {
         return when (exp) {
             is FunctionCallExpression -> {
+                val functionName = exp.functionName
+                var irFunctionReference: IrFunctionHeader? = null
+                for (import in imports) {
+                    import.functions.find { it.name == functionName }?.let {
+                        irFunctionReference = it
+                    }
+                    if (irFunctionReference != null) break
+                }
+
+                if (irFunctionReference == null) {
+                    // TODO error
+                    throw IllegalArgumentException("Can't find function $functionName in ${astModule.name} @ ${exp.debugInfo}")
+                }
+
                 instructions.add(FunctionCallInstruction(
                         exp.debugInfo,
-                        exp.functionName,
+                        irFunctionReference!!,
                         exp.arguments.map {
                             val i = generateExpression(it)
                             // if the expression is an identifier, that means there is already a register for it and
